@@ -1,0 +1,12 @@
+# Godot
+.godot/
+*.translation
+# Exports: attach to GitHub Releases instead (the Windows exe is over 100 MB)
+build/
+*.zip
+# Python
+__pycache__/
+*.pyc
+# OS
+.DS_Store
+Thumbs.db
