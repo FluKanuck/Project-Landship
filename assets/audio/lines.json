@@ -1,0 +1,542 @@
+{
+ "lines": {
+  "contact_000": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero zero zero."
+  },
+  "multi_000": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero zero zero."
+  },
+  "contact_010": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero one zero."
+  },
+  "multi_010": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero one zero."
+  },
+  "contact_020": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero two zero."
+  },
+  "multi_020": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero two zero."
+  },
+  "contact_030": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero three zero."
+  },
+  "multi_030": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero three zero."
+  },
+  "contact_040": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero four zero."
+  },
+  "multi_040": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero four zero."
+  },
+  "contact_050": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero five zero."
+  },
+  "multi_050": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero five zero."
+  },
+  "contact_060": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero six zero."
+  },
+  "multi_060": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero six zero."
+  },
+  "contact_070": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero seven zero."
+  },
+  "multi_070": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero seven zero."
+  },
+  "contact_080": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero eight zero."
+  },
+  "multi_080": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero eight zero."
+  },
+  "contact_090": {
+   "role": "sensors",
+   "text": "Contact. Bearing zero niner zero."
+  },
+  "multi_090": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing zero niner zero."
+  },
+  "contact_100": {
+   "role": "sensors",
+   "text": "Contact. Bearing one zero zero."
+  },
+  "multi_100": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one zero zero."
+  },
+  "contact_110": {
+   "role": "sensors",
+   "text": "Contact. Bearing one one zero."
+  },
+  "multi_110": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one one zero."
+  },
+  "contact_120": {
+   "role": "sensors",
+   "text": "Contact. Bearing one two zero."
+  },
+  "multi_120": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one two zero."
+  },
+  "contact_130": {
+   "role": "sensors",
+   "text": "Contact. Bearing one three zero."
+  },
+  "multi_130": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one three zero."
+  },
+  "contact_140": {
+   "role": "sensors",
+   "text": "Contact. Bearing one four zero."
+  },
+  "multi_140": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one four zero."
+  },
+  "contact_150": {
+   "role": "sensors",
+   "text": "Contact. Bearing one five zero."
+  },
+  "multi_150": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one five zero."
+  },
+  "contact_160": {
+   "role": "sensors",
+   "text": "Contact. Bearing one six zero."
+  },
+  "multi_160": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one six zero."
+  },
+  "contact_170": {
+   "role": "sensors",
+   "text": "Contact. Bearing one seven zero."
+  },
+  "multi_170": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one seven zero."
+  },
+  "contact_180": {
+   "role": "sensors",
+   "text": "Contact. Bearing one eight zero."
+  },
+  "multi_180": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one eight zero."
+  },
+  "contact_190": {
+   "role": "sensors",
+   "text": "Contact. Bearing one niner zero."
+  },
+  "multi_190": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing one niner zero."
+  },
+  "contact_200": {
+   "role": "sensors",
+   "text": "Contact. Bearing two zero zero."
+  },
+  "multi_200": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two zero zero."
+  },
+  "contact_210": {
+   "role": "sensors",
+   "text": "Contact. Bearing two one zero."
+  },
+  "multi_210": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two one zero."
+  },
+  "contact_220": {
+   "role": "sensors",
+   "text": "Contact. Bearing two two zero."
+  },
+  "multi_220": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two two zero."
+  },
+  "contact_230": {
+   "role": "sensors",
+   "text": "Contact. Bearing two three zero."
+  },
+  "multi_230": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two three zero."
+  },
+  "contact_240": {
+   "role": "sensors",
+   "text": "Contact. Bearing two four zero."
+  },
+  "multi_240": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two four zero."
+  },
+  "contact_250": {
+   "role": "sensors",
+   "text": "Contact. Bearing two five zero."
+  },
+  "multi_250": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two five zero."
+  },
+  "contact_260": {
+   "role": "sensors",
+   "text": "Contact. Bearing two six zero."
+  },
+  "multi_260": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two six zero."
+  },
+  "contact_270": {
+   "role": "sensors",
+   "text": "Contact. Bearing two seven zero."
+  },
+  "multi_270": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two seven zero."
+  },
+  "contact_280": {
+   "role": "sensors",
+   "text": "Contact. Bearing two eight zero."
+  },
+  "multi_280": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two eight zero."
+  },
+  "contact_290": {
+   "role": "sensors",
+   "text": "Contact. Bearing two niner zero."
+  },
+  "multi_290": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing two niner zero."
+  },
+  "contact_300": {
+   "role": "sensors",
+   "text": "Contact. Bearing three zero zero."
+  },
+  "multi_300": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three zero zero."
+  },
+  "contact_310": {
+   "role": "sensors",
+   "text": "Contact. Bearing three one zero."
+  },
+  "multi_310": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three one zero."
+  },
+  "contact_320": {
+   "role": "sensors",
+   "text": "Contact. Bearing three two zero."
+  },
+  "multi_320": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three two zero."
+  },
+  "contact_330": {
+   "role": "sensors",
+   "text": "Contact. Bearing three three zero."
+  },
+  "multi_330": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three three zero."
+  },
+  "contact_340": {
+   "role": "sensors",
+   "text": "Contact. Bearing three four zero."
+  },
+  "multi_340": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three four zero."
+  },
+  "contact_350": {
+   "role": "sensors",
+   "text": "Contact. Bearing three five zero."
+  },
+  "multi_350": {
+   "role": "sensors",
+   "text": "Multiple contacts. Bearing three five zero."
+  },
+  "contact_lost_a": {
+   "role": "sensors",
+   "text": "Contact lost."
+  },
+  "contact_lost_b": {
+   "role": "sensors",
+   "text": "Lost him. Marking last known."
+  },
+  "contact_class": {
+   "role": "sensors",
+   "text": "Contact classified. Light raider. Hover drive."
+  },
+  "node_found": {
+   "role": "sensors",
+   "text": "Sensors. Alien structure in sight. Looks like a recharge node."
+  },
+  "burst": {
+   "role": "sensors",
+   "text": "Data burst received. Updating the plot."
+  },
+  "xo_boot": {
+   "role": "xo",
+   "text": "Commander on the bridge."
+  },
+  "xo_ready": {
+   "role": "xo",
+   "text": "All stations report ready. Swift one and two are fuelled on deck."
+  },
+  "xo_tc": {
+   "role": "xo",
+   "text": "Dropping time compression."
+  },
+  "xo_alert_on": {
+   "role": "xo",
+   "text": "Action stations. Action stations."
+  },
+  "xo_alert_off": {
+   "role": "xo",
+   "text": "Stand down from action stations."
+  },
+  "xo_hint_launch": {
+   "role": "xo",
+   "text": "Commander, plot a route on the tactical screen, then launch a Swift."
+  },
+  "xo_hint_time": {
+   "role": "xo",
+   "text": "Long legs out there. Time compression is on the helm panel."
+  },
+  "xo_objective": {
+   "role": "xo",
+   "text": "Intelligence says the raiders run from a base somewhere in this sector. Find it."
+  },
+  "xo_objective_done": {
+   "role": "xo",
+   "text": "That's their nest. Good work, commander. Keep eyes on it."
+  },
+  "cannot_launch": {
+   "role": "flight",
+   "text": "Negative. That bird is not ready."
+  },
+  "rebuild": {
+   "role": "flight",
+   "text": "Fabrication has started a replacement Swift."
+  },
+  "rebuilt": {
+   "role": "flight",
+   "text": "Replacement Swift is on deck."
+  },
+  "locked": {
+   "role": "comms",
+   "text": "No link, commander. We can't send her new orders."
+  },
+  "helm_0": {
+   "role": "helm",
+   "text": "Helm, all stop."
+  },
+  "helm_1": {
+   "role": "helm",
+   "text": "Helm, silent crawl."
+  },
+  "helm_2": {
+   "role": "helm",
+   "text": "Helm, ahead cruise."
+  },
+  "helm_3": {
+   "role": "helm",
+   "text": "Helm, ahead flank."
+  },
+  "helm_course": {
+   "role": "helm",
+   "text": "Course laid in."
+  },
+  "helm_done": {
+   "role": "helm",
+   "text": "Helm. Course complete. All stop."
+  },
+  "helm_limit": {
+   "role": "helm",
+   "text": "Helm. Survey limit ahead. All stop."
+  },
+  "helm_restart": {
+   "role": "helm",
+   "text": "Breaking her out of the sand. That cost us some fuel."
+  },
+  "launch_1": {
+   "role": "flight",
+   "text": "Swift one, launching."
+  },
+  "station_1": {
+   "role": "flight",
+   "text": "Swift one, on station."
+  },
+  "loiter_1": {
+   "role": "flight",
+   "text": "Swift one, loitering."
+  },
+  "scan_1": {
+   "role": "flight",
+   "text": "Swift one, scanning."
+  },
+  "rtb_1": {
+   "role": "flight",
+   "text": "Swift one, returning to carrier."
+  },
+  "bingo_1": {
+   "role": "flight",
+   "text": "Swift one, bingo fuel. Coming home."
+  },
+  "recovered_1": {
+   "role": "flight",
+   "text": "Swift one recovered. Refuelling."
+  },
+  "ready_1": {
+   "role": "flight",
+   "text": "Swift one, ready on deck."
+  },
+  "fire_1": {
+   "role": "flight",
+   "text": "Swift one is taking fire!"
+  },
+  "breaking_1": {
+   "role": "flight",
+   "text": "Swift one, breaking off!"
+  },
+  "damage_1": {
+   "role": "flight",
+   "text": "Swift one is hit. Still flying."
+  },
+  "lost_1": {
+   "role": "flight",
+   "text": "We've lost Swift one."
+  },
+  "weak_1": {
+   "role": "comms",
+   "text": "Swift one, signal getting weak."
+  },
+  "linklost_1": {
+   "role": "comms",
+   "text": "Link lost with Swift one. She's flying on her last orders."
+  },
+  "linkback_1": {
+   "role": "comms",
+   "text": "Link restored with Swift one."
+  },
+  "launch_2": {
+   "role": "flight",
+   "text": "Swift two, launching."
+  },
+  "station_2": {
+   "role": "flight",
+   "text": "Swift two, on station."
+  },
+  "loiter_2": {
+   "role": "flight",
+   "text": "Swift two, loitering."
+  },
+  "scan_2": {
+   "role": "flight",
+   "text": "Swift two, scanning."
+  },
+  "rtb_2": {
+   "role": "flight",
+   "text": "Swift two, returning to carrier."
+  },
+  "bingo_2": {
+   "role": "flight",
+   "text": "Swift two, bingo fuel. Coming home."
+  },
+  "recovered_2": {
+   "role": "flight",
+   "text": "Swift two recovered. Refuelling."
+  },
+  "ready_2": {
+   "role": "flight",
+   "text": "Swift two, ready on deck."
+  },
+  "fire_2": {
+   "role": "flight",
+   "text": "Swift two is taking fire!"
+  },
+  "breaking_2": {
+   "role": "flight",
+   "text": "Swift two, breaking off!"
+  },
+  "damage_2": {
+   "role": "flight",
+   "text": "Swift two is hit. Still flying."
+  },
+  "lost_2": {
+   "role": "flight",
+   "text": "We've lost Swift two."
+  },
+  "weak_2": {
+   "role": "comms",
+   "text": "Swift two, signal getting weak."
+  },
+  "linklost_2": {
+   "role": "comms",
+   "text": "Link lost with Swift two. She's flying on her last orders."
+  },
+  "linkback_2": {
+   "role": "comms",
+   "text": "Link restored with Swift two."
+  }
+ },
+ "chatter": [
+  "Coolant pressure is nominal.",
+  "Track six, temperature steady.",
+  "Copy that.",
+  "Checking.",
+  "Fabricator is idle.",
+  "Rotating the plot.",
+  "Updating the grid.",
+  "Filter two reset.",
+  "Roger, standing by.",
+  "Dust count is rising.",
+  "Logging it.",
+  "Sector clear.",
+  "Say again?",
+  "Confirm, frequency two.",
+  "Hull sensors green.",
+  "Power bus stable.",
+  "Running the check now.",
+  "Got it.",
+  "Negative, still nothing.",
+  "Wind's picking up from the west.",
+  "Hangar reports ready.",
+  "Sand in the intakes again.",
+  "Marking it on the board.",
+  "Stand by one."
+ ]
+}
