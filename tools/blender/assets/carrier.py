@@ -68,8 +68,21 @@ def carrier():
     # ---------------------------------------------------------------- tower
     tw = Part("tower")
     rz = ROOM[2]
-    # lower tower, deck to bridge floor
-    tw.box((30, 44, rz - DECK), (0, -106, DECK + (rz - DECK) / 2), "bone", chamfer=1.5, taper=(0.9, 0.92))
+    # lower tower, deck to below the crew pits (1.3 m under the bridge floor), so no
+    # tower surface shows inside the room or z-fights with its floor.
+    tz = rz - 1.4
+    tw.box((30, 44, tz - DECK), (0, -106, DECK + (tz - DECK) / 2), "bone", chamfer=1.5, taper=(0.9, 0.92))
+    # lid closing the tower top for the exterior cameras (the room is bridge-layer only),
+    # under the 0.3 m floor slab, with holes where the crew pits drop through it
+    lid_x, lid_y = (-13.5, 13.5), (-126.0, -86.0)
+    hole_x, hole_y = (3.0, 6.8), (ROOM[1] - 2.8, ROOM[1] + 4.0)
+    lid = [
+        (lid_x[0], lid_x[1], lid_y[0], hole_y[0]), (lid_x[0], lid_x[1], hole_y[1], lid_y[1]),
+        (lid_x[0], -hole_x[1], hole_y[0], hole_y[1]), (-hole_x[0], hole_x[0], hole_y[0], hole_y[1]),
+        (hole_x[1], lid_x[1], hole_y[0], hole_y[1]),
+    ]
+    for x0, x1, y0, y1 in lid:
+        tw.box((x1 - x0, y1 - y0, 1.0), ((x0 + x1) / 2, (y0 + y1) / 2, rz - 0.9), "bone")
     # bridge level: back + sides as solid blocks round the room
     tw.box((28, 6, 6.0), (0, -105.5, rz + 3.0), "bone")
     for sx in (-1, 1):

@@ -1,7 +1,7 @@
 class_name Player
 extends Node3D
 ## The commander. Sits in the chair with the display around them; can stand, walk the room,
-## lean over the holo table, or use the settings terminal. Hold ALT (or press TAB) for a
+## lean over the holo table, or use the settings terminal. Tap ALT or TAB to toggle a
 ## cursor while the view stays put.
 
 signal hint_changed(text: String)
@@ -38,6 +38,7 @@ func _init(b: Bridge) -> void:
 
 func _ready() -> void:
 	cam = Camera3D.new()
+	cam.cull_mask = WorldView.LAYER_WORLD | WorldView.LAYER_BRIDGE # never the thermal stand-ins
 	cam.near = 0.05
 	cam.far = 22000.0
 	cam.fov = Prefs.fov
@@ -48,7 +49,7 @@ func _ready() -> void:
 
 
 func cursor_active() -> bool:
-	return mode in [Mode.TABLE, Mode.TERMINAL] or (mode == Mode.SEATED and (alt_held or cursor_toggle))
+	return mode in [Mode.TABLE, Mode.TERMINAL] or (mode == Mode.SEATED and cursor_toggle)
 
 
 func release_boot() -> void:
@@ -114,9 +115,19 @@ func _unhandled_input(ev: InputEvent) -> void:
 	if ev.is_action_pressed("cursor_toggle") and mode == Mode.SEATED:
 		cursor_toggle = not cursor_toggle
 		_update_mouse_mode()
-	if ev is InputEventKey and ev.keycode == KEY_ALT:
-		alt_held = ev.pressed
-		_update_mouse_mode()
+	# ALT is a toggle like TAB. It flips on release, and only for a clean tap, so ALT+TAB
+	# (or ALT plus any other key) out of the window does not change it.
+	if ev is InputEventKey and not ev.echo:
+		if ev.keycode == KEY_ALT:
+			if ev.pressed:
+				alt_held = true
+			else:
+				if alt_held and mode == Mode.SEATED:
+					cursor_toggle = not cursor_toggle
+					_update_mouse_mode()
+				alt_held = false
+		elif ev.pressed:
+			alt_held = false # another key during ALT: not a tap
 	if ev.is_action_pressed("interact"):
 		_interact()
 	if ev.is_action_pressed("escape"):
@@ -134,6 +145,19 @@ func _unhandled_input(ev: InputEvent) -> void:
 	for i in 3:
 		if ev.is_action_pressed("select_%d" % (i + 1)):
 			Sim.select(i if i < 2 else -1)
+	# display hotkeys (the display is a SubViewport, so keys are routed to it from here)
+	var frames: Dictionary = bridge.projection.mfd.frames
+	if ev.is_action_pressed("thermal") and frames.has("feed"):
+		var feed: FeedPanel = frames["feed"].content
+		feed.thermal = (feed.thermal + 1) % 3
+		Sfx.ui("beep")
+	if ev.is_action_pressed("gimbal_auto") and frames.has("feed"):
+		var feed: FeedPanel = frames["feed"].content
+		feed.world.gimbal_auto(feed.which)
+		Sfx.ui("beep")
+	if ev.is_action_pressed("map_centre") and frames.has("tactical"):
+		(frames["tactical"].content as TacticalPanel).map.recentre()
+		Sfx.ui("beep")
 	if mode in [Mode.SEATED, Mode.WALK]:
 		for i in 4:
 			if ev.is_action_pressed("preset_%d" % (i + 1)):
@@ -201,7 +225,12 @@ func _table_input(ev: InputEventMouse, o: Vector3, d: Vector3) -> void:
 		elif ev.button_index == MOUSE_BUTTON_LEFT and ev.pressed:
 			var w := holo.pick(o, d)
 			if w != Vector2.INF:
-				if not Sim.order_point(w):
+				var u := Sim.unit_near(w, holo.span * 0.025) # click a unit to select it
+				if u != -2:
+					if u != Sim.selected:
+						Sim.select(u)
+						Sfx.ui("button")
+				elif not Sim.order_point(w):
 					Sfx.ui("err")
 	elif ev is InputEventMouseMotion and _drag_pan:
 		holo.pan_by(ev.relative)
@@ -317,21 +346,26 @@ func _free(p: Vector2) -> bool:
 
 func _update_hint() -> void:
 	var h := ""
+	var k := func(a: String) -> String: return "[%s]" % Prefs.key_name(a)
 	match mode:
 		Mode.SEATED:
-			h = "[E] STAND UP     HOLD [ALT] / [TAB] CURSOR     [1-4] DISPLAY PRESETS     [,] [.] TIME"
+			h = "%s STAND UP     [ALT] / %s CURSOR     [%s-%s] DISPLAY PRESETS     %s %s TIME     %s ALL KEYS" % [
+				k.call("interact"), k.call("cursor_toggle"), Prefs.key_name("preset_1"), Prefs.key_name("preset_4"),
+				k.call("time_down"), k.call("time_up"), k.call("help")]
 			if cursor_active():
-				h = "CURSOR: CLICK THE DISPLAY OR THE CHAIR BUTTONS.  DRAG A SECTION HEADER TO SWAP SECTIONS."
+				h = "CURSOR ON: CLICK THE DISPLAY OR THE CHAIR BUTTONS.  DRAG A HEADER TO SWAP.  [ALT] / %s LOOK AGAIN" % k.call("cursor_toggle")
 		Mode.WALK:
 			match _nearest():
-				"chair": h = "[E] SIT IN THE COMMAND CHAIR"
-				"table": h = "[E] USE THE HOLO TABLE"
-				"terminal": h = "[E] SETTINGS TERMINAL"
-				_: h = "[WASD] WALK   [SHIFT] RUN"
+				"chair": h = "%s SIT IN THE COMMAND CHAIR" % k.call("interact")
+				"table": h = "%s USE THE HOLO TABLE" % k.call("interact")
+				"terminal": h = "%s SETTINGS TERMINAL" % k.call("interact")
+				_: h = "[%s%s%s%s] WALK   %s RUN" % [Prefs.key_name("move_forward"), Prefs.key_name("move_left"),
+					Prefs.key_name("move_back"), Prefs.key_name("move_right"), k.call("run")]
 		Mode.TABLE:
-			h = "HOLO TABLE: [LMB] ORDER  [RMB DRAG] PAN  [WHEEL] ZOOM  [F1/F2/F3] UNIT  [E] STEP BACK"
+			h = "HOLO TABLE: [LMB] SELECT / ORDER  [RMB DRAG] PAN  [WHEEL] ZOOM  %s%s%s UNIT  %s STEP BACK" % [
+				k.call("select_1"), k.call("select_2"), k.call("select_3"), k.call("interact")]
 		Mode.TERMINAL:
-			h = "SETTINGS: CLICK TO ADJUST.  [E] / [ESC] STEP BACK"
+			h = "SETTINGS: CLICK TO ADJUST.  %s / [ESC] STEP BACK" % k.call("interact")
 	if h != _hint:
 		_hint = h
 		hint_changed.emit(h)

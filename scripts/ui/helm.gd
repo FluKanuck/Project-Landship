@@ -5,6 +5,7 @@ extends Control
 
 var throttle_btns: Array[Button] = []
 var tc_btns: Array[Button] = []
+var time_lbl: Label
 
 
 func _ready() -> void:
@@ -31,7 +32,8 @@ func _ready() -> void:
 		Sim.clear_orders()
 		Sim.selected = keep)
 	h.add_child(clear)
-	v.add_child(UiTheme.label("TIME COMPRESSION", 16, Pal.UI_DIM))
+	time_lbl = UiTheme.label("", 16, Pal.UI_DIM)
+	v.add_child(time_lbl)
 	var t := HBoxContainer.new()
 	t.add_theme_constant_override("separation", 6)
 	v.add_child(t)
@@ -51,6 +53,7 @@ func _process(_d: float) -> void:
 		throttle_btns[i].set_pressed_no_signal(Sim.carrier.throttle == i)
 	for i in tc_btns.size():
 		tc_btns[i].set_pressed_no_signal(Sim.scale_idx == i)
+	time_lbl.text = "TIME COMPRESSION   [%s] SLOWER  [%s] FASTER" % [Prefs.key_name("time_down"), Prefs.key_name("time_up")]
 	queue_redraw()
 
 

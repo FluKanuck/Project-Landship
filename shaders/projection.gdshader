@@ -6,7 +6,7 @@ render_mode unshaded, cull_disabled, depth_draw_opaque, blend_mix;
 
 uniform sampler2D screen_tex : source_color, filter_linear_mipmap;
 uniform float centre_alpha = 1.0;
-uniform float edge_alpha = 0.12;
+uniform float edge_alpha = 0.3;
 uniform float boot = 1.0;       // 0..1 power-up sweep
 uniform float glow = 1.25;
 uniform float alert = 0.0;
@@ -22,7 +22,7 @@ void fragment() {
 	col.b = texture(screen_tex, uv - c * 0.004).b;
 	// elliptical vignette: opaque core, fading rim
 	float e = length(c * vec2(2.0, 2.0));
-	float edge = smoothstep(0.62, 1.02, max(abs(c.x) * 2.0, abs(c.y) * 2.0) * 0.55 + e * 0.5);
+	float edge = smoothstep(0.7, 1.06, max(abs(c.x) * 2.0, abs(c.y) * 2.0) * 0.55 + e * 0.5);
 	float a = mix(centre_alpha, edge_alpha, edge);
 	// projected light: brighter content reads more opaque than dark background
 	float lum = dot(col, vec3(0.3, 0.55, 0.15));

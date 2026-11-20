@@ -27,13 +27,16 @@ def room_shell():
 
     # ---------------------------------------------------------------- floor
     fl = Part("floor-col")
-    pits_x = (3.2, 6.6)
-    pits_y = (-2.6, 3.8)
+    # floor holes 5 cm wider than the pits' inner faces, so the slab edges hide inside the
+    # pit walls instead of being flush with them
+    pits_x = (3.15, 6.65)
+    pits_y = (-2.65, 3.85)
+    a, b = pits_x
     pieces = [
-        (-3.2, 3.2, -7, 7.6),  # centre aisle
-        (-9, -6.6, -7, 7.6), (6.6, 9, -7, 7.6),  # outer strips
-        (-6.6, -3.2, -7, pits_y[0]), (3.2, 6.6, -7, pits_y[0]),
-        (-6.6, -3.2, pits_y[1], 7.6), (3.2, 6.6, pits_y[1], 7.6),
+        (-a, a, -7, 7.6),  # centre aisle
+        (-9, -b, -7, 7.6), (b, 9, -7, 7.6),  # outer strips
+        (-b, -a, -7, pits_y[0]), (a, b, -7, pits_y[0]),
+        (-b, -a, pits_y[1], 7.6), (a, b, pits_y[1], 7.6),
     ]
     for x0, x1, y0, y1 in pieces:
         fl.box((x1 - x0, y1 - y0, 0.3), ((x0 + x1) / 2, (y0 + y1) / 2, -0.15), "deck")

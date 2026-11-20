@@ -5,6 +5,11 @@ extends Node3D
 
 const LAYER_WORLD := 1
 const LAYER_BRIDGE := 2
+## Heat stand-ins seen only by the thermal camera: a copy of each hot model in a flat
+## heat-value material, and a terrain shaded by sun warmth. Every other camera leaves it out.
+const LAYER_HEAT := 4
+var heat_terrain_mat: ShaderMaterial
+var _heat_mats := {}
 
 var env: Environment
 var sun: DirectionalLight3D
@@ -125,6 +130,17 @@ func _build_terrain() -> void:
 	sk.material_override = mat
 	sk.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(sk)
+	# thermal terrain: the same meshes, shaded by how much sun each slope takes
+	heat_terrain_mat = ShaderMaterial.new()
+	heat_terrain_mat.shader = load("res://shaders/heat_terrain.gdshader")
+	for src in [mi, sk]:
+		var h := MeshInstance3D.new()
+		h.name = src.name + "Heat"
+		h.mesh = src.mesh
+		h.material_override = heat_terrain_mat
+		h.layers = LAYER_HEAT
+		h.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(h)
 	# oasis water
 	var w := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
@@ -138,6 +154,7 @@ func _build_terrain() -> void:
 	w.material_override = wm
 	w.position = Vector3(Terrain.OASIS.x, t.water_level, Terrain.OASIS.y)
 	add_child(w)
+	add_heat(w, 0.12) # water runs cool
 
 
 func _build_props() -> void:
@@ -169,6 +186,7 @@ func _build_props() -> void:
 		wr.position = Vector3(wp.x, t.height_at(wp.x, wp.y), wp.y)
 		wr.rotation.y = rng.randf() * TAU
 		add_child(wr)
+		add_heat(wr, 0.5) # dark metal soaking up the sun
 	# oasis scrub
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
@@ -204,6 +222,7 @@ func _build_props() -> void:
 	var cp := Terrain.CAMP
 	node.position = Vector3(cp.x, t.height_at(cp.x, cp.y) - 0.3, cp.y)
 	add_child(node)
+	add_heat(node, 0.8, {"ring": 1.0})
 	node_ring = Assets.find(node, "ring") as Node3D
 	var glow := OmniLight3D.new()
 	glow.light_color = Pal.CYAN
@@ -219,6 +238,7 @@ func _build_carrier() -> void:
 	carrier_node = Assets.spawn("hum_carrier")
 	carrier_node.name = "Carrier"
 	add_child(carrier_node)
+	add_heat(carrier_node, 0.62, {"tracks": 0.85, "radar": 0.7, "tower_lights": 0.9})
 	radar = Assets.find(carrier_node, "radar") as Node3D
 	# sand thrown up by the tracks (Kharak: "the splash the carrier makes when it crests a dune")
 	for p in [Vector3(-40, 4, 150), Vector3(40, 4, 150), Vector3(0, 4, 156), Vector3(-40, 4, -110), Vector3(40, 4, -110)]:
@@ -266,13 +286,17 @@ func _build_units() -> void:
 		camera.cull_mask = LAYER_WORLD
 		camera.position = Vector3(0, 0, -0.25)
 		gimbal.add_child(camera)
+		add_heat(root, 0.72, {"rotor_main": 0.9})
 		var trail := _make_smoke()
 		root.add_child(trail)
 		drone_vis.append({"root": root, "prop": Assets.find(root, "rotor_main"), "gimbal": gimbal, "cam": camera,
-			"smoke": trail, "look": Vector3.ZERO})
+			"smoke": trail, "look": Vector3.ZERO,
+			# gimbal control from the feed panel: "auto" | "manual" | "point" | "contact"
+			"gmode": "auto", "az": 0.0, "el": 0.0, "gpoint": Vector3.ZERO, "gcontact": null})
 	for r in Sim.raiders:
 		var root := Assets.spawn("aln_gnd_raider")
 		add_child(root)
+		add_heat(root, 0.92, {"hover_glow": 1.0})
 		var dust := _make_dust()
 		dust.position = Vector3(0, 0.3, 1.6)
 		root.add_child(dust)
@@ -415,6 +439,7 @@ func _physics_process(_d: float) -> void:
 
 
 func _process(delta: float) -> void:
+	heat_terrain_mat.set_shader_parameter("to_sun", sun.global_basis.z)
 	if _cur.is_empty():
 		_physics_process(0.0)
 	var f := Engine.get_physics_interpolation_fraction()
@@ -496,10 +521,31 @@ func _aim_gimbal(d: DroneSim, v: Dictionary, delta: float) -> void:
 		if c.live and Vector2(c.pos.x, c.pos.z).distance_to(d.pos2()) < 900.0:
 			target = c.pos
 			break
+	var rate := 1.5
+	match v.gmode:
+		"manual":
+			# fixed compass bearing and depression, steady while the airframe orbits
+			var dir := Vector3(sin(v.az) * cos(v.el), sin(v.el), -cos(v.az) * cos(v.el))
+			target = gimbal.global_position + dir * 1000.0
+			rate = 0.0 # follows the drag directly
+		"point":
+			target = v.gpoint
+			rate = 4.0
+		"contact":
+			var c = Sim.contacts.get(v.gcontact)
+			if c == null:
+				v.gmode = "point" # the contact is gone: hold where it was
+				target = v.gpoint
+			else:
+				v.gpoint = c.pos # live or ghost: the last known position
+				target = c.pos
+				if not c.live:
+					v.gmode = "point"
+			rate = 4.0
 	var cur: Vector3 = v.look
-	if cur == Vector3.ZERO:
+	if cur == Vector3.ZERO or rate == 0.0:
 		cur = target
-	cur = cur.lerp(target, clampf(delta * 1.5, 0.0, 1.0))
+	cur = cur.lerp(target, clampf(delta * rate, 0.0, 1.0))
 	v.look = cur
 	# the lens faces Blender +Y, which is Godot -Z, so look_at aims lens and camera together
 	if gimbal.global_position.distance_to(cur) > 1.0:
@@ -531,6 +577,107 @@ func _draw_tracers(delta: float) -> void:
 
 func feed_camera(i: int) -> Camera3D:
 	return drone_vis[i].cam
+
+
+# ------------------------------------------------------------------ thermal
+
+## Give every mesh under root a heat stand-in on LAYER_HEAT (0 cold .. 1 white hot).
+## by_name sets a different heat for a named part and everything under it. The stand-in
+## is a child of the mesh, so moving parts (rotors, radar) carry their heat with them.
+func add_heat(root: Node, heat: float, by_name := {}) -> void:
+	var h: float = by_name.get(String(root.name), heat)
+	if root is MeshInstance3D and (root as VisualInstance3D).layers & LAYER_WORLD:
+		var src := root as MeshInstance3D
+		var p := MeshInstance3D.new()
+		p.mesh = src.mesh
+		p.material_override = _heat_mat(h)
+		p.layers = LAYER_HEAT
+		p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		src.add_child(p)
+	for c in root.get_children():
+		if c is MeshInstance3D and (c as VisualInstance3D).layers == LAYER_HEAT:
+			continue
+		add_heat(c, h, by_name)
+
+
+func _heat_mat(h: float) -> StandardMaterial3D:
+	var k := snappedf(h, 0.01)
+	if not _heat_mats.has(k):
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = Color(k, k, k)
+		m.disable_receive_shadows = true
+		_heat_mats[k] = m
+	return _heat_mats[k]
+
+
+# ------------------------------------------------------------------ gimbal control
+
+## "auto" | "manual" | "point" | "contact"
+func gimbal_mode(i: int) -> String:
+	return drone_vis[i].gmode
+
+
+func gimbal_contact(i: int):
+	return drone_vis[i].gcontact
+
+
+func gimbal_point(i: int) -> Vector3:
+	return drone_vis[i].gpoint
+
+
+func gimbal_auto(i: int) -> void:
+	drone_vis[i].gmode = "auto"
+
+
+## Slew by a mouse drag: angles in radians, added to the current aim.
+func gimbal_slew(i: int, d_az: float, d_el: float) -> void:
+	var v: Dictionary = drone_vis[i]
+	if v.gmode != "manual":
+		# start from wherever the lens points now
+		var dir := -(v.gimbal as Node3D).global_basis.z
+		v.az = atan2(dir.x, -dir.z)
+		v.el = asin(clampf(dir.y, -1.0, 1.0))
+		v.gmode = "manual"
+	v.az = wrapf(v.az + d_az, -PI, PI)
+	v.el = clampf(v.el + d_el, deg_to_rad(-89.0), deg_to_rad(10.0))
+
+
+func gimbal_lock_point(i: int, p: Vector3) -> void:
+	drone_vis[i].gmode = "point"
+	drone_vis[i].gpoint = p
+
+
+func gimbal_lock_contact(i: int, rid) -> void:
+	drone_vis[i].gmode = "contact"
+	drone_vis[i].gcontact = rid
+	drone_vis[i].gpoint = Sim.contacts[rid].pos
+
+
+## Where a camera ray first meets the ground (ray march on the height field), or null.
+static func ground_hit(origin: Vector3, dir: Vector3, max_dist := 12000.0):
+	var t := Sim.terrain
+	var step := 8.0
+	var prev := 0.0
+	var s := step
+	while s < max_dist:
+		var p := origin + dir * s
+		if p.y <= t.height_at(p.x, p.z):
+			# refine between the last point above ground and this one
+			var lo := prev
+			var hi := s
+			for k in 12:
+				var mid := (lo + hi) * 0.5
+				var q := origin + dir * mid
+				if q.y <= t.height_at(q.x, q.z):
+					hi = mid
+				else:
+					lo = mid
+			return origin + dir * hi
+		prev = s
+		step = minf(step * 1.08, 60.0)
+		s += step
+	return null
 
 
 func drone_root(i: int) -> Node3D:

@@ -111,6 +111,13 @@ func _on_map_click(p: Vector2, button: int) -> void:
 	if button == MOUSE_BUTTON_RIGHT:
 		Sim.undo_point()
 		return
+	# a click on a unit selects it (18 px of slop at the current zoom)
+	var u := Sim.unit_near(p, 18.0 * map.span / maxf(map.size.y, 1.0))
+	if u != -2:
+		if u != Sim.selected:
+			Sim.select(u)
+			Sfx.ui("button")
+		return
 	if not Sim.order_point(p):
 		Sfx.ui("err")
 
@@ -122,7 +129,9 @@ func _process(_d: float) -> void:
 		unit_btns[i].set_pressed_no_signal(is_sel)
 		if i < Sim.drones.size():
 			var d := Sim.drones[i]
-			unit_btns[i].text = "%s %s" % [d.callsign, _short(d)]
+			unit_btns[i].text = "%s %s %s" % [Prefs.key_name("select_%d" % (i + 1)), d.callsign, _short(d)]
+		else:
+			unit_btns[i].text = "%s LANDSHIP" % Prefs.key_name("select_3")
 	var d := Sim.selected_drone()
 	var drone_mode := d != null
 	launch_btn.visible = drone_mode

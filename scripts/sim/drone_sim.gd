@@ -218,6 +218,11 @@ func _active(dt: float, sim: SimCore) -> void:
 			start_rtb(sim, "evade")
 		return
 	if mode == "loiter" or mode == "scan":
+		# the waypoint being worked was cleared or replaced: drop the orbit and fly the
+		# plan as it is now (otherwise the end of the old orbit skips the new first point)
+		if wp >= plan.size() or plan[wp].pos != orbit_center:
+			mode = ""
+			return
 		mode_timer -= dt
 		_orbit(dt, sim, SCAN_ALT if mode == "scan" else ALT)
 		if mode_timer <= 0.0:

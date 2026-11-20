@@ -84,17 +84,4 @@ func _on_event(kind: String, data: Dictionary) -> void:
 
 
 func _inputs() -> void:
-	var keys := {
-		"move_forward": [KEY_W, KEY_UP], "move_back": [KEY_S, KEY_DOWN], "move_left": [KEY_A, KEY_LEFT],
-		"move_right": [KEY_D, KEY_RIGHT], "run": [KEY_SHIFT], "interact": [KEY_E], "cursor_toggle": [KEY_TAB],
-		"escape": [KEY_ESCAPE], "time_up": [KEY_PERIOD, KEY_EQUAL], "time_down": [KEY_COMMA, KEY_MINUS],
-		"preset_1": [KEY_1], "preset_2": [KEY_2], "preset_3": [KEY_3], "preset_4": [KEY_4],
-		"select_1": [KEY_F1], "select_2": [KEY_F2], "select_3": [KEY_F3], "help": [KEY_H],
-	}
-	for a in keys:
-		if not InputMap.has_action(a):
-			InputMap.add_action(a)
-		for k in keys[a]:
-			var e := InputEventKey.new()
-			e.physical_keycode = k
-			InputMap.action_add_event(a, e)
+	Prefs.apply_keys() # bindings live in Prefs (rebindable on the settings terminal)

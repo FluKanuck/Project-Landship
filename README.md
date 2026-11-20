@@ -28,19 +28,27 @@ Click once to take command. Headphones help: the crew talks.
 | Where | Input | Does |
 | --- | --- | --- |
 | Seated | Mouse | Look around. The display stays fixed in front of the chair. |
-| Seated | Hold **ALT** (or press **TAB**) | Cursor: use the display and the chair buttons |
+| Seated | Tap **ALT** or **TAB** | Toggle the cursor: use the display and the chair buttons |
 | Seated | **1 2 3 4** | Chair buttons: COMBAT / RECON / TRANSIT layouts, ACTION STATIONS |
 | Display | Drag a section header onto another section | Swap the two sections |
 | Tactical / holo | **F1 F2 F3** | Select SWIFT-1 / SWIFT-2 / LANDSHIP |
+| Tactical / holo | Left click a unit | Select it |
 | Tactical / holo | Left click | Add a waypoint (uses the ACT and ROE you last picked) |
 | Tactical / holo | Right click | Remove the last waypoint |
 | Tactical | Mouse wheel | Zoom inside the operational area |
-| Drone feed | Mouse wheel | Camera zoom. THERMAL button for the heat view. |
+| Tactical | Drag (left or middle) | Pan the map; the CENTRE button returns to the operational area |
+| Drone feed | Mouse wheel | Camera zoom. THERMAL button cycles off / white hot / ironbow. |
+| Drone feed | Drag / left click / right click | Slew the gimbal / lock onto a contact or a ground spot / back to AUTO |
 | Anywhere | **,** and **.** | Time compression x1 / x4 / x16 / x64 |
 | Anywhere | **E** | Stand up / sit / use the holo table / use the settings terminal |
 | Walking | **WASD**, **SHIFT** | Walk, run |
 | Holo table | Right drag, wheel | Pan, zoom (it can show the whole theatre) |
-| Anywhere | **H** | Help card |
+| Anywhere | **H** or **?** | Card with every key |
+| Anywhere | **T** / **G** / **C** | Feed thermal (off / white hot / ironbow) / gimbal back to AUTO / tactical map centre |
+
+Every key except ESC, the ALT cursor tap and the arrow / `=` `-` extras can be rebound on the
+settings terminal's CONTROLS page (saved to `user://prefs.cfg`). On-screen buttons and the
+keys card show the current bindings.
 
 ### What is in the wedge
 

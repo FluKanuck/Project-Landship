@@ -29,7 +29,33 @@ func _init() -> void:
 	v.size = root.size - Vector2(60, 40)
 	v.add_theme_constant_override("separation", 10)
 	root.add_child(v)
-	v.add_child(UiTheme.label("MAINTENANCE TERMINAL // SETTINGS", 26, Pal.UI_HOT))
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	v.add_child(top)
+	var title := UiTheme.label("MAINTENANCE TERMINAL", 24, Pal.UI_HOT)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(title)
+	var gen := VBoxContainer.new()
+	gen.add_theme_constant_override("separation", 10)
+	var ctl := VBoxContainer.new()
+	ctl.add_theme_constant_override("separation", 6)
+	ctl.visible = false
+	v.add_child(gen)
+	v.add_child(ctl)
+	var tab_g := UiTheme.button("SETTINGS", true, 130)
+	var tab_c := UiTheme.button("CONTROLS", true, 130)
+	tab_g.button_pressed = true
+	tab_g.pressed.connect(func():
+		gen.visible = true; ctl.visible = false
+		tab_g.set_pressed_no_signal(true); tab_c.set_pressed_no_signal(false)
+		Prefs.capturing = "")
+	tab_c.pressed.connect(func():
+		gen.visible = false; ctl.visible = true
+		tab_g.set_pressed_no_signal(false); tab_c.set_pressed_no_signal(true))
+	top.add_child(tab_g)
+	top.add_child(tab_c)
+	_controls(ctl)
+	v = gen
 	_slider(v, "MASTER VOLUME", "master", 0.0, 1.0)
 	_slider(v, "VOICE", "voice", 0.0, 1.0)
 	_slider(v, "AMBIENCE", "ambience", 0.0, 1.0)
@@ -76,6 +102,63 @@ func _slider(parent: Control, text: String, key: String, lo: float, hi: float) -
 		val.text = fmt.call(x))
 	h.add_child(s)
 	h.add_child(val)
+
+
+## CONTROLS page: every rebindable action with its key. Click a key, then press the new one
+## (ESC cancels). A key already in use swaps over to the other action.
+var _key_btns := {}
+
+
+func _controls(parent: Control) -> void:
+	parent.add_child(UiTheme.label("CLICK A KEY, THEN PRESS THE NEW ONE.  ESC CANCELS.  A KEY IN USE SWAPS.", 15, Pal.UI_DIM))
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 24)
+	parent.add_child(cols)
+	var half := int(ceil(Prefs.BINDABLE.size() / 2.0))
+	var col: VBoxContainer
+	for i in Prefs.BINDABLE.size():
+		if i % half == 0:
+			col = VBoxContainer.new()
+			col.add_theme_constant_override("separation", 4)
+			cols.add_child(col)
+		var action: String = Prefs.BINDABLE[i][0]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 8)
+		col.add_child(row)
+		var l := UiTheme.label(Prefs.BINDABLE[i][1], 16)
+		l.custom_minimum_size = Vector2(190, 0)
+		row.add_child(l)
+		var b := UiTheme.button("", false, 110)
+		b.custom_minimum_size.y = 34
+		b.add_theme_font_size_override("font_size", 16)
+		b.pressed.connect(func():
+			Prefs.capturing = action
+			_refresh_keys())
+		row.add_child(b)
+		_key_btns[action] = b
+	var bottom := HBoxContainer.new()
+	bottom.add_theme_constant_override("separation", 10)
+	parent.add_child(bottom)
+	var reset := UiTheme.button("RESET TO DEFAULTS", false, 220)
+	reset.custom_minimum_size.y = 34
+	reset.pressed.connect(func():
+		Prefs.capturing = ""
+		Prefs.reset_keys())
+	bottom.add_child(reset)
+	bottom.add_child(UiTheme.label("FIXED: ESC, ALT CURSOR TAP, ARROWS, = -", 15, Pal.UI_DIM))
+	Prefs.keys_changed.connect(_refresh_keys)
+	_refresh_keys()
+
+
+func _refresh_keys() -> void:
+	for a in _key_btns:
+		var b: Button = _key_btns[a]
+		if Prefs.capturing == a:
+			b.text = "PRESS KEY"
+			b.add_theme_color_override("font_color", Pal.UI_WARN)
+		else:
+			b.text = Prefs.key_name(a)
+			b.remove_theme_color_override("font_color")
 
 
 func _toggle(parent: Control, text: String, key: String) -> void:

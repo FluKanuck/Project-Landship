@@ -103,8 +103,7 @@ func click_mfd(ctrl: Control, offset := Vector2(0.5, 0.5), button := MOUSE_BUTTO
 	var proj: CmdProjection = main.bridge.projection
 	var px := ctrl.get_global_rect().position + ctrl.get_global_rect().size * offset
 	var uv := px / Vector2(CmdProjection.RES)
-	var local := Vector3((uv.x - 0.5) * CmdProjection.SIZE.x, (0.5 - uv.y) * CmdProjection.SIZE.y, 0.0)
-	var world := proj.screen.global_transform * local
+	var world := proj.screen.global_transform * CmdProjection.local_at(uv)
 	var cam: Camera3D = main.player.cam
 	var sp := cam.unproject_position(world)
 	var mm := InputEventMouseMotion.new()
@@ -161,7 +160,7 @@ func interact() -> void:
 	for k in 6:
 		var px := a.lerp(b, k / 5.0)
 		var uv := px / Vector2(CmdProjection.RES)
-		pts.append(cam.unproject_position(proj.screen.global_transform * Vector3((uv.x - 0.5) * CmdProjection.SIZE.x, (0.5 - uv.y) * CmdProjection.SIZE.y, 0)))
+		pts.append(cam.unproject_position(proj.screen.global_transform * CmdProjection.local_at(uv)))
 	var down := InputEventMouseButton.new()
 	down.position = pts[0]
 	down.button_index = MOUSE_BUTTON_LEFT
@@ -246,6 +245,7 @@ func look() -> void:
 	await _wait(0.6)
 	await shot("l1b_window_west")
 	var c := Camera3D.new()
+	c.cull_mask = WorldView.LAYER_WORLD | WorldView.LAYER_BRIDGE
 	main.world.add_child(c)
 	c.far = 20000.0
 	c.current = true
@@ -306,6 +306,7 @@ func quick() -> void:
 	await _wait(0.6)
 	await shot("q4b_back_wall")
 	var c := Camera3D.new()
+	c.cull_mask = WorldView.LAYER_WORLD | WorldView.LAYER_BRIDGE
 	main.world.add_child(c)
 	var cx: Transform3D = main.world.carrier_xform()
 	c.global_position = cx * Vector3(-300, 120, 420)
@@ -372,6 +373,7 @@ func tour() -> void:
 	await shot("10_terminal")
 	# exterior: free camera near the carrier
 	var c := Camera3D.new()
+	c.cull_mask = WorldView.LAYER_WORLD | WorldView.LAYER_BRIDGE
 	main.world.add_child(c)
 	var cx: Transform3D = main.world.carrier_xform()
 	c.global_transform = Transform3D().looking_at(Vector3(0, -0.25, -1), Vector3.UP)

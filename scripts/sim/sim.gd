@@ -131,6 +131,25 @@ func select(i: int) -> void:
 	selection_changed.emit()
 
 
+## The unit drawn nearest to a map point, within radius metres: a drone id, -1 for the
+## landship, or -2 for none. Drones out of link are hit at their predicted position (that
+## is where the map draws them); drones on deck or in fabrication are not on the map.
+func unit_near(p: Vector2, radius: float) -> int:
+	var best := -2
+	var best_d := radius
+	for d in drones:
+		if not d.airborne() or d.state == DroneSim.State.DESTROYED:
+			continue
+		var src: DroneSim = shadows.get(d.id, d) if d.link == DroneSim.Link.LOST else d
+		var dd := src.pos2().distance_to(p)
+		if dd < best_d:
+			best = d.id
+			best_d = dd
+	if best == -2 and carrier.pos2().distance_to(p) < maxf(radius, 200.0):
+		best = -1
+	return best
+
+
 func selected_drone() -> DroneSim:
 	if selected < 0 or selected >= drones.size():
 		return null
@@ -187,6 +206,8 @@ func clear_orders() -> void:
 		emit_event("orders_locked", {"drone": d})
 		return
 	d.plan.resize(mini(d.wp, d.plan.size()))
+	if d.mode in ["loiter", "scan"]:
+		d.mode = "" # CLR also cancels the orbit in progress (its waypoint is gone)
 	d.set_plan_changed()
 
 

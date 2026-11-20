@@ -15,6 +15,13 @@ var hover := Vector2(-1, -1)
 var bg: ColorRect
 var mat: ShaderMaterial
 var _t := 0.0
+## Centre follows the operational area until the commander pans; CENTRE puts it back.
+var follow := true
+var centre_btn: Button
+var _press = null # left button down position (null when up)
+var _dragging := false
+var _mid_drag := false
+const DRAG_PX := 6.0
 
 
 func _ready() -> void:
@@ -32,6 +39,23 @@ func _ready() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	bg.show_behind_parent = true
+	centre_btn = UiTheme.button("CENTRE", false, 0)
+	centre_btn.add_theme_font_size_override("font_size", 16)
+	centre_btn.tooltip_text = "Back to the whole operational area"
+	centre_btn.pressed.connect(recentre)
+	centre_btn.visible = false
+	add_child(centre_btn)
+
+
+func recentre() -> void:
+	follow = true
+	zoom = 1.0
+
+
+func _pan(px: Vector2) -> void:
+	follow = false
+	centre -= px * (span / maxf(size.y, 1.0))
+	centre = centre.clamp(Vector2.ONE * -Terrain.HALF, Vector2.ONE * Terrain.HALF)
 
 
 ## Operational area: the carrier's sensor radius stretched to cover every linked drone.
@@ -55,9 +79,12 @@ func _process(delta: float) -> void:
 		var aspect := size.x / size.y
 		var want_span := maxf(a.size.y, a.size.x / aspect)
 		want_span = clampf(want_span, 4500.0, 11000.0) / zoom
-		var want_c := a.get_center() if zoom <= 1.01 else centre
+		var want_c := a.get_center() if (follow and zoom <= 1.01) else centre
 		span = lerpf(span, want_span, clampf(delta * 3.0, 0.0, 1.0))
 		centre = centre.lerp(want_c, clampf(delta * 3.0, 0.0, 1.0))
+	centre_btn.visible = not follow or zoom > 1.01
+	centre_btn.text = "%s CENTRE" % Prefs.key_name("map_centre")
+	centre_btn.position = size - centre_btn.size - Vector2(10, 10) # bottom right
 	mat.set_shader_parameter("centre", centre)
 	mat.set_shader_parameter("span", span)
 	mat.set_shader_parameter("aspect", size.x / maxf(size.y, 1.0))
@@ -77,12 +104,32 @@ func m2px(m: float) -> float:
 	return m * size.y / span
 
 
+## Left click: order / select (on release, so a drag can pan instead). Left or middle drag:
+## pan. Right click: undo. Wheel: zoom.
 func _gui_input(ev: InputEvent) -> void:
 	if ev is InputEventMouseMotion:
 		hover = ev.position
+		if _press != null and not _dragging and ev.position.distance_to(_press) > DRAG_PX:
+			_dragging = true
+		if _dragging or _mid_drag:
+			_pan(ev.relative)
+			accept_event()
+	elif ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_LEFT:
+		if ev.pressed:
+			_press = ev.position
+			_dragging = false
+		else:
+			if _press != null and not _dragging:
+				clicked_world.emit(p2w(ev.position), MOUSE_BUTTON_LEFT)
+			_press = null
+			_dragging = false
+		accept_event()
+	elif ev is InputEventMouseButton and ev.button_index == MOUSE_BUTTON_MIDDLE:
+		_mid_drag = ev.pressed
+		accept_event()
 	elif ev is InputEventMouseButton and ev.pressed:
 		match ev.button_index:
-			MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT:
+			MOUSE_BUTTON_RIGHT:
 				clicked_world.emit(p2w(ev.position), ev.button_index)
 				accept_event()
 			MOUSE_BUTTON_WHEEL_UP:

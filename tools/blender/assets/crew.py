@@ -84,11 +84,13 @@ def crew_pit():
     # steps down at the back end
     for i in range(3):
         p.box((1.0, 0.32, 0.4 * (i + 1)), (-W / 2 + 0.6, -L / 2 + 0.16 + 0.32 * (2 - i), -D + 0.2 * (i + 1)), "steel", chamfer=0.02)
-    # rim coping and handrails
+    # rim coping and handrails; the coping sits on the floor (top 6 mm proud) so its
+    # top face does not z-fight with the room floor it overhangs; it also lips 2 cm over
+    # the pit so its inner face is not flush with the wall's inner face
     for sy in (-1, 1):
-        p.box((W + 0.4, 0.2, 0.06), (0, sy * (L / 2 + 0.1), -0.03), "hazard")
+        p.box((W + 0.4, 0.22, 0.06), (0, sy * (L / 2 + 0.09), -0.024), "hazard")
     for sx in (-1, 1):
-        p.box((0.2, L + 0.4, 0.06), (sx * (W / 2 + 0.1), 0, -0.03), "hazard")
+        p.box((0.22, L + 0.4, 0.06), (sx * (W / 2 + 0.09), 0, -0.024), "hazard")
         for y in (-2.9, -1.0, 1.0, 2.9):
             p.cyl(0.025, 0.95, (sx * (W / 2 + 0.12), y, 0.475), sides=6, color="steel")
         p.box((0.06, L - 0.1, 0.06), (sx * (W / 2 + 0.12), 0, 0.96), "steel", chamfer=0.015)

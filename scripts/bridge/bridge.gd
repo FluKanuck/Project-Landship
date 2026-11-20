@@ -44,13 +44,17 @@ func _ready() -> void:
 	panel = Assets.attach(chair, "socket_preset_panel", "hum_preset_panel", "interior")
 	Assets.set_layer(panel, WorldView.LAYER_BRIDGE)
 	var names := {"btn_combat": "CMBT", "btn_recon": "RECN", "btn_transit": "TRNS", "btn_alert": "ALRT"}
+	var acts := {"btn_combat": "preset_1", "btn_recon": "preset_2", "btn_transit": "preset_3", "btn_alert": "preset_4"}
 	for n in names:
 		var b := Assets.find(panel, n) as Node3D
 		buttons[n] = {"node": b, "rest": b.position, "down": 0.0}
 		var l := Label3D.new()
-		l.text = names[n]
+		# name plus its hotkey, kept current when keys are rebound
+		var set_text := func(): l.text = "%s [%s]" % [names[n], Prefs.key_name(acts[n])]
+		set_text.call()
+		Prefs.keys_changed.connect(set_text)
 		l.font = load("res://assets/fonts/ShareTechMono-Regular.ttf")
-		l.font_size = 24
+		l.font_size = 19 # smaller than before: the label now carries the key too
 		l.pixel_size = 0.0007
 		l.modulate = Pal.PHOSPHOR if n != "btn_alert" else Pal.RED
 		l.rotation_degrees = Vector3(-90, 0, 0)
