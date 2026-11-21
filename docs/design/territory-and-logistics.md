@@ -198,13 +198,24 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - The two routes trade off: relays are cheap and far-reaching but can be cut; upgrades are
   expensive and safe, and travel with you.
 
-## Open questions (round 5)
-1. **Units carried by lifters:** which units are in scope beyond Swifts, haulers and lifters
-   (e.g. a light armed escort for haulers)?
-2. **Upgrade structure:** a short linear tier per facility (I/II/III), or slots where you pick
-   what to fit?
-3. **Next step:** turn this into a scoped "wedge 2" prototype plan (one hub, one relay, one
-   hauler, raider looting) so we can test the loop?
+## Round 5 detail (21 Nov)
+
+### No new unit types
+- The roster stays: **Swift** (scout), **hauler** (cargo pod or engineer kit), **air lifter**.
+- Haulers and lifters can be fitted with **light defensive weapons**, which is how a
+  convoy defends itself instead of needing a separate escort unit.
+
+### Fitting: slots with size limits, modules with tiers
+- The landship has a fixed number of **slots**. Each slot has a **size limit** (S / M / L).
+- Any **module** of that size or smaller (TBD) can be fitted. A module has **tiers**
+  (I / II / III). Upgrading a tier costs materials and fabricator time.
+- The fit is the landship's build: you can't have every upgrade, so you choose what kind
+  of commander you are (long reach, heavy logistics, sensor-heavy, fast fabrication).
+- Starting module list: comms mast (L), sensor suite (M/L), hangar (L), fabricator (L),
+  crane rig (M), elevator/ramp (M), stores expansion (M), point defence (S).
+- Proposal: haulers and lifters use the **same system** with fewer, smaller slots
+  (e.g. one utility slot for pod / engineer kit / sling, one small hardpoint for the
+  light weapon).
 
 ## Decisions
 
@@ -221,6 +232,9 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - Air lifters stay: small, fast loads and units.
 - Landship fuel is a slow strategic gauge, not a constant concern; keep about today's endurance and tune later.
 - Coverage on the large map comes from relays plus upgradable facilities aboard the landship.
+- No new unit types beyond Swift, hauler and lifter; haulers and lifters can carry light defensive weapons.
+- Landship upgrades: a fixed number of slots, each with a size limit; any module within that size tier fits; each module has tiers.
+- Next step: a whole-system prototype (all the loops in, rough art), not another thin wedge. See `systems-prototype-plan.md`.
 
 ## Parked
 
