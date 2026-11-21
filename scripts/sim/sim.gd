@@ -124,6 +124,7 @@ func _ready() -> void:
 		r.energy = 1.0
 		raiders.append(r)
 	net.rebuild(self)
+	_last_objective = objective()
 	_stamp(carrier.pos2(), carrier_sensor())
 	_upload_know()
 
@@ -651,8 +652,9 @@ func plant_problem(k: int, p: Vector2) -> String:
 		var site := site_at(p)
 		if site == null:
 			return "hub parts need a resource site"
-		if site.owner == Logi.Owner.ALIEN:
-			return "site is held by the enemy"
+		for st in site.structures(self):
+			if st.is_alien():
+				return "site is held by the enemy"
 		if k == Logi.Kind.EXTRACTOR and site.find(self, Logi.Kind.EXTRACTOR, false):
 			return "site already has an extractor"
 	if terrain.slope_at(p.x, p.y) > 0.45:
@@ -669,6 +671,7 @@ func plant(k: int, p: Vector2, by: VehicleSim) -> StructureSim:
 	var s := structure_at_site(k, Logi.Owner.PLAYER, p)
 	if s.site >= 0:
 		sites[s.site].owner = Logi.Owner.PLAYER
+		sites[s.site].known_owner = Logi.Owner.PLAYER
 	emit_event("planted", {"veh": by, "kind": k, "site": sites[s.site] if s.site >= 0 else null})
 	return s
 
@@ -743,7 +746,7 @@ func settle(site: SiteSim, r: RaiderSim) -> StructureSim:
 		if not s.is_alien():
 			return null
 	var op := structure_at_site(Logi.Kind.ALIEN_OUTPOST, Logi.Owner.ALIEN, site.pos + Vector2(25, -15))
-	emit_event("alien_settling", {"site": site, "seen": site.linked})
+	emit_event("alien_settling", {"site": site, "seen": observed(site.pos)})
 	return op
 
 
@@ -757,7 +760,7 @@ func structure_online(s: StructureSim) -> void:
 	if s.is_alien():
 		if s.kind == Logi.Kind.ALIEN_OUTPOST and s.site >= 0:
 			sites[s.site].owner = Logi.Owner.ALIEN
-			emit_event("alien_outpost", {"site": sites[s.site], "seen": net.covers(s.pos)})
+			emit_event("alien_outpost", {"site": sites[s.site], "seen": observed(s.pos)})
 		return
 	emit_event("structure_online", {"s": s, "site": sites[s.site] if s.site >= 0 else null})
 	if s.kind == Logi.Kind.EXTRACTOR and not first_hub:
@@ -809,7 +812,7 @@ func raider_killed(r: RaiderSim) -> void:
 	var s := site_at(r.pos2(), 600.0)
 	if s:
 		s.salvage += 6.0 + r.loot[0] * 0.5 + r.loot[1] * 0.5
-	emit_event("raider_killed", {"id": r.id, "seen": net.covers(r.pos2())})
+	emit_event("raider_killed", {"id": r.id, "seen": observed(r.pos2())})
 	if contacts.has(r.id):
 		contacts.erase(r.id)
 
@@ -818,6 +821,15 @@ func hubs() -> Array[SiteSim]:
 	var out: Array[SiteSim] = []
 	for s in sites:
 		if s.owner == Logi.Owner.PLAYER:
+			out.append(s)
+	return out
+
+
+## Hubs as the bridge knows them: a hub taken while it was dark still shows as ours.
+func known_hubs() -> Array[SiteSim]:
+	var out: Array[SiteSim] = []
+	for s in sites:
+		if s.known_owner == Logi.Owner.PLAYER or (s.owner == Logi.Owner.PLAYER and s.linked):
 			out.append(s)
 	return out
 
@@ -994,6 +1006,14 @@ func _sensors() -> Array:
 	return out
 
 
+## Is a point under a linked sensor right now (could the bridge see it)?
+func observed(p: Vector2) -> bool:
+	for sn in _sensors():
+		if sn[2] and p.distance_to(sn[0]) < sn[1]:
+			return true
+	return false
+
+
 func _discover(s: SiteSim, from_burst := false) -> void:
 	if s.discovered:
 		return
@@ -1014,8 +1034,7 @@ func _update_sensors(dt: float) -> void:
 			if s.pos.distance_to(sn[0]) < sn[1] + 150.0:
 				if sn[2]:
 					_discover(s)
-					if s.owner != Logi.Owner.PLAYER:
-						s.observe(self)
+					s.observe(self)
 				elif sn[3] is DroneSim:
 					var l: Array = sn[3].get_meta("sites", [])
 					if not l.has(s.id):

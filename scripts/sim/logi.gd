@@ -68,7 +68,7 @@ const UTILITY := {
 const GUN_COST := 10
 const VEH_REFIT_TIME := 60.0
 const VEHICLE := {
-	Veh.HAULER: {"speed": 9.0, "rough_speed": 4.0, "cargo": 60.0, "kits": 2, "hp": 8, "fuel_per_km": 0.25, "sensor": 900.0},
+	Veh.HAULER: {"speed": 9.0, "rough_speed": 4.0, "cargo": 60.0, "kits": 2, "hp": 10, "fuel_per_km": 0.25, "sensor": 900.0},
 	Veh.LIFTER: {"speed": 34.0, "cargo": 15.0, "kits": 1, "hp": 3, "fuel_per_km": 0.18, "sensor": 1100.0,
 		"alt": 160.0, "endurance": 5400.0},
 }
@@ -84,7 +84,7 @@ const KIND_NAMES := ["EXTRACTOR", "TURRET", "PAD", "RELAY", "SCANNER", "RECHARGE
 const KIND_SHORT := ["EXT", "TUR", "PAD", "RLY", "SCN", "NODE", "OUTPOST"]
 const STRUCT := {
 	Kind.EXTRACTOR: {"hp": 12, "self_erect": false, "on_site": true},
-	Kind.TURRET: {"hp": 10, "self_erect": false, "on_site": true, "range": 950.0, "cd": 2.0, "hit": 0.35},
+	Kind.TURRET: {"hp": 16, "self_erect": false, "on_site": true, "range": 950.0, "cd": 2.0, "hit": 0.35},
 	Kind.PAD: {"hp": 8, "self_erect": false, "on_site": true},
 	Kind.RELAY: {"hp": 5, "self_erect": true, "erect_time": 60.0, "range": 3500.0},
 	Kind.SCANNER: {"hp": 5, "self_erect": true, "erect_time": 90.0, "sensor": 2000.0},
@@ -129,7 +129,7 @@ const SALVAGE_FACILITY := 40.0 # materials salvaged from a destroyed alien facil
 const ALIEN_START_STOCK := 200.0
 const NODE_YIELD := 10.0 # alien stock per game hour from the recharge node itself
 const RAIDER_COST := 30.0 # alien stock to field a replacement raider
-const RAIDER_RESPAWN := 1200.0 # seconds between replacement raiders from a node
+const RAIDER_RESPAWN := 1800.0 # seconds between replacement raiders from a node
 const OUTPOST_YIELD := 8.0 # alien stock per game hour from an outpost
 const RAIDER_CARRY := 20.0 # loot one raider can carry home, per resource
 const RAIDER_HP := 4

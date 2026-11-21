@@ -1,5 +1,8 @@
 # Systems Prototype — plan
 
+**Status (21 Nov): built.** Steps 1–9 are in the game on the design branch. See "What was
+built" at the end for where each piece lives and what changed from this plan.
+
 Goal: put the **whole territory and logistics system** into the game, with every loop working
 end to end, tuned enough to judge, using rough art. It is not another thin wedge: the test is
 whether running a supply network from the bridge is the game, not only whether one moment lands.
@@ -85,3 +88,24 @@ Steps 1–3 can be built and checked headless. Step 8 is where it becomes playab
 - Do vehicles use the slot system too? (Proposal: yes, smaller.)
 - Starting slot layout for the landship (proposal: 2 L, 3 M, 3 S) and starting fit.
 - Exact costs and yields: set in step 9.
+
+## What was built
+
+| Step | Where | Notes |
+| --- | --- | --- |
+| 1 Stores, fabricator, fitting | `logi.gd`, `stores.gd`, `fabricator.gd`, `fitting.gd` | Swift replacements queue automatically and cost 40 materials. Refuelling Swifts draws on the tank. |
+| 2 Sites | `site_sim.gd`, `site_gen.gd` | The mine, oasis, wrecks and camp seed the generator. `sitegen` scenario checks 10 / 40 / 100 km. |
+| 3 Link net, relays, scanners | `link_net.gd`, `structure_sim.gd` | Relays and scanners get up to +40% range from high ground. Scanners buffer and burst. |
+| 4 Hubs | `structure_sim.gd`, `sim.gd` | Crane plant (`Sim.crane_plant`) or engineer/sling (`BUILD` waypoints). |
+| 5 Vehicles | `vehicle_sim.gd` | Hauler and lifter with POD / ENGINEER / SLING and an optional gun. Standing routes. A hauler that runs dry limps home at 2 m/s. |
+| 6 Loading | `Sim.hauler_gate` | Ramp at crawl on firm ground; crane up to cruise (one at a time). Ramp tier sets the vehicle bay size. |
+| 7 Raiders vs the network | `raider_sim.gd`, `Sim._update_hub_raids`, `Sim._alien_economy` | Assault, loot, settle (outpost), respawn from alien stock, stranded with no home. |
+| 8 Bridge UI + callouts | `tactical.gd`, `logistics.gd`, `fitting_panel.gd`, `map_view.gd`, `holo.gd`, `sfx.gd` | Presets 5/6, F4 cycles vehicles. New callouts play a squelch until voice lines are generated. |
+| 9 Art + balance | `tools/blender/assets/logistics.py` | Nine new models, all under their triangle limits. Balance from `logitest` soaks. |
+
+Decisions taken while building (also in the design doc):
+- A module fits a slot of its size **or bigger**.
+- Landship layout is **3 L, 4 M, 3 S** (the fabricator takes an L slot, so 2 L was too tight).
+- Vehicles do not use the full slot system: one **utility** fit (pod / engineer / sling)
+  plus an optional **light gun**.
+- Turret 16 hp: one turret holds off a single raider; a group needs two.

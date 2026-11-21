@@ -262,7 +262,7 @@ func _update_markers() -> void:
 		var key := "site%d" % s.id
 		if not s.discovered:
 			continue
-		var owner := s.owner if s.owner != Logi.Owner.PLAYER or s.linked else s.known_owner
+		var owner := s.known_owner
 		var col := Pal.UI_TEXT
 		if owner == Logi.Owner.PLAYER:
 			col = Pal.UI_FRIEND

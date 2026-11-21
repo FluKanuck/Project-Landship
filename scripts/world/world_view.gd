@@ -19,6 +19,11 @@ var _prev := {}
 var _cur := {}
 var _tracer_list: Array = []
 var track_dust: Array[CPUParticles3D] = []
+var node_root: Node3D
+var struct_vis := {} # structure id -> {root, model, crate, kind, smoke}
+var veh_vis := {} # vehicle id -> {root, rotors, parts, dust}
+const STRUCT_ASSET := {Logi.Kind.EXTRACTOR: "hum_str_extractor", Logi.Kind.TURRET: "hum_str_turret", Logi.Kind.PAD: "hum_str_pad",
+	Logi.Kind.RELAY: "hum_str_relay", Logi.Kind.SCANNER: "hum_str_scanner", Logi.Kind.ALIEN_OUTPOST: "aln_str_outpost"}
 
 
 func _ready() -> void:
@@ -204,6 +209,7 @@ func _build_props() -> void:
 	var cp := Terrain.CAMP
 	node.position = Vector3(cp.x, t.height_at(cp.x, cp.y) - 0.3, cp.y)
 	add_child(node)
+	node_root = node
 	node_ring = Assets.find(node, "ring") as Node3D
 	var glow := OmniLight3D.new()
 	glow.light_color = Pal.CYAN
@@ -365,7 +371,7 @@ func _build_effects() -> void:
 	tracers.mesh = tracer_mesh
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(0.6, 2.4, 2.2)
+	m.albedo_color = Color(1, 1, 1)
 	m.vertex_color_use_as_albedo = true
 	tracers.material_override = m
 	tracers.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -412,6 +418,8 @@ func _physics_process(_d: float) -> void:
 		_cur["d%d" % d.id] = [d.pos, d.heading, d.bank]
 	for r in Sim.raiders:
 		_cur["r%d" % r.id] = [r.pos, r.heading]
+	for v in Sim.vehicles:
+		_cur["v%d" % v.id] = [v.pos, v.heading]
 
 
 func _process(delta: float) -> void:
@@ -473,8 +481,141 @@ func _process(delta: float) -> void:
 		var moving := r.vel.length() > 3.0
 		(v.dust as CPUParticles3D).emitting = moving
 		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() * 0.012 + i * 2.0)
-		(v.light as OmniLight3D).light_energy = 1.2 + pulse * 1.5
+		(v.light as OmniLight3D).light_energy = 1.2 + pulse * 1.5 if r.alive() else 0.0
+		if not r.alive():
+			(v.root as Node3D).rotation.z = 0.35
+			(v.dust as CPUParticles3D).emitting = false
+	_update_structures(delta, ts)
+	_update_vehicles(delta, f)
 	_draw_tracers(delta)
+
+
+# ------------------------------------------------------------------ the supply war
+
+func _update_structures(delta: float, ts: float) -> void:
+	var t := Sim.terrain
+	for s in Sim.structures:
+		if s.kind == Logi.Kind.ALIEN_NODE:
+			if s.dead and node_root and node_root.rotation.z < 0.25:
+				node_root.rotation.z = minf(0.25, node_root.rotation.z + delta * 0.1)
+				node_root.position.y -= delta * 1.5
+			continue
+		var vis: Dictionary = struct_vis.get(s.id, {})
+		if vis.is_empty():
+			var root := Node3D.new()
+			root.position = Vector3(s.pos.x, t.height_at(s.pos.x, s.pos.y) - 0.2, s.pos.y)
+			root.rotation.y = fposmod(s.id * 1.7, TAU)
+			add_child(root)
+			var model := Assets.spawn(STRUCT_ASSET[s.kind])
+			root.add_child(model)
+			var crate: Node3D = null
+			if s.owner == Logi.Owner.PLAYER:
+				crate = Assets.spawn("hum_kit_crate")
+				root.add_child(crate)
+			var smoke := _make_smoke()
+			smoke.position = Vector3(0, 3, 0)
+			root.add_child(smoke)
+			vis = {"root": root, "model": model, "crate": crate, "smoke": smoke,
+				"head": Assets.find(model, "turret_head"), "dish": Assets.find(model, "dish"),
+				"scan": Assets.find(model, "scanner_head"), "pump": Assets.find(model, "pump_head")}
+			struct_vis[s.id] = vis
+		var model: Node3D = vis.model
+		var built := s.build >= 1.0
+		if vis.crate:
+			(vis.crate as Node3D).visible = not built and not s.dead
+		model.visible = built or s.is_alien() or s.dead
+		var full := 1.7 if s.is_alien() else 1.0
+		if s.is_alien() and not built:
+			model.scale = Vector3.ONE * lerpf(0.2, full, s.build)
+		elif built:
+			model.scale = Vector3.ONE * full
+		(vis.smoke as CPUParticles3D).emitting = s.dead and Sim.game_time - s.died_at < 1800.0 or (not s.dead and s.hp < s.max_hp * 0.5)
+		if s.dead:
+			model.visible = true
+			if model.rotation.x < 0.3:
+				model.rotation.x = minf(0.3, model.rotation.x + delta * 0.5)
+				model.position.y = maxf(-3.0, model.position.y - delta * 2.0)
+			continue
+		if not built:
+			continue
+		if vis.head:
+			var best := Vector3.INF
+			var bd := 1200.0
+			for r in Sim.raiders:
+				if r.alive() and r.pos2().distance_to(s.pos) < bd:
+					bd = r.pos2().distance_to(s.pos)
+					best = r.pos
+			if best != Vector3.INF:
+				var head: Node3D = vis.head
+				var to := best - head.global_position
+				var want := atan2(-to.x, -to.z)
+				head.global_rotation.y = lerp_angle(head.global_rotation.y, want, clampf(delta * 3.0, 0.0, 1.0))
+		if vis.dish:
+			(vis.dish as Node3D).rotate_object_local(Vector3.UP, delta * 0.2 * minf(ts, 4.0))
+		if vis.scan:
+			(vis.scan as Node3D).rotate_object_local(Vector3.UP, delta * 1.6 * minf(ts, 4.0))
+		if vis.pump:
+			(vis.pump as Node3D).position.y = 10.0 + sin(Time.get_ticks_msec() * 0.002 * minf(ts, 4.0)) * 0.8
+
+
+func _update_vehicles(delta: float, f: float) -> void:
+	var t := Sim.terrain
+	for v in Sim.vehicles:
+		var vis: Dictionary = veh_vis.get(v.id, {})
+		if vis.is_empty():
+			var root := Assets.spawn("hum_gnd_hauler" if v.is_hauler() else "hum_air_lifter")
+			add_child(root)
+			var rotors: Array = []
+			for i in 4:
+				var rt := Assets.find(root, "rotor_%d" % i)
+				if rt:
+					rotors.append(rt)
+			var dust := _make_dust()
+			dust.position = Vector3(0, 0.4, 5.0)
+			dust.scale_amount_min = 6.0
+			dust.scale_amount_max = 14.0
+			root.add_child(dust)
+			var smoke := _make_smoke()
+			root.add_child(smoke)
+			vis = {"root": root, "rotors": rotors, "dust": dust, "smoke": smoke, "parts": {}}
+			for part in ["pod", "engineer", "sling", "gun"]:
+				var n := Assets.find(root, part)
+				if n:
+					vis.parts[part] = n
+			veh_vis[v.id] = vis
+		var root: Node3D = vis.root
+		root.visible = v.is_out() or v.state == VehicleSim.State.DESTROYED
+		if not root.visible:
+			continue
+		for part in vis.parts:
+			var n: Node3D = vis.parts[part]
+			n.visible = (part == "gun" and v.gun) or part == v.utility
+		if vis.parts.has("pod") and v.utility == "pod" and v.is_hauler():
+			(vis.parts.pod as Node3D).visible = true
+		var k := "v%d" % v.id
+		var cur: Array = _cur.get(k, [v.pos, v.heading])
+		var p: Vector3 = cur[0]
+		var h: float = cur[1]
+		if _prev.has(k):
+			var pv: Array = _prev[k]
+			if (pv[0] as Vector3).distance_to(cur[0]) < 200.0:
+				p = (pv[0] as Vector3).lerp(cur[0], f)
+				h = lerp_angle(pv[1], cur[1], f)
+		var basis := Basis(Vector3.UP, -h)
+		if v.is_hauler() and v.state != VehicleSim.State.BOARDING:
+			var fw := Vector2(sin(h), -cos(h))
+			var hf := t.height_at(p.x + fw.x * 5.0, p.z + fw.y * 5.0)
+			var hb := t.height_at(p.x - fw.x * 5.0, p.z - fw.y * 5.0)
+			basis = basis * Basis(Vector3.RIGHT, atan2(hf - hb, 10.0))
+		if v.state == VehicleSim.State.DESTROYED:
+			basis = basis * Basis(Vector3.BACK, 0.4)
+		root.global_transform = Transform3D(basis, p)
+		var moving := v.speed > 1.0 and v.state != VehicleSim.State.DESTROYED
+		(vis.dust as CPUParticles3D).emitting = v.is_hauler() and moving
+		(vis.smoke as CPUParticles3D).emitting = v.state == VehicleSim.State.DESTROYED or v.hp < v.max_hp * 0.5
+		for rt in vis.rotors:
+			if v.airborne() or v.state == VehicleSim.State.BOARDING:
+				(rt as Node3D).rotate_object_local(Vector3.UP, delta * 40.0)
 
 
 func _aim_gimbal(d: DroneSim, v: Dictionary, delta: float) -> void:
@@ -509,8 +650,22 @@ func _aim_gimbal(d: DroneSim, v: Dictionary, delta: float) -> void:
 func _draw_tracers(delta: float) -> void:
 	for r in Sim.raiders:
 		for s in r.shots:
-			_tracer_list.append({"from": s.from, "to": s.to, "t": 0.0})
+			_tracer_list.append({"from": s.from, "to": s.to, "t": 0.0, "c": Color(0.24, 2.4, 2.1)})
 		r.shots.clear()
+	var ours := Color(2.2, 1.3, 0.4)
+	for s in Sim.structures:
+		for sh in s.shots:
+			_tracer_list.append({"from": sh.from, "to": sh.to, "t": 0.0, "c": ours})
+		s.shots.clear()
+	for v in Sim.vehicles:
+		for sh in v.shots:
+			_tracer_list.append({"from": sh.from, "to": sh.to, "t": 0.0, "c": ours})
+		v.shots.clear()
+	for sh in Sim.pd_shots:
+		_tracer_list.append({"from": sh.from, "to": sh.to, "t": 0.0, "c": ours})
+	Sim.pd_shots.clear()
+	if _tracer_list.size() > 200:
+		_tracer_list = _tracer_list.slice(_tracer_list.size() - 200)
 	tracer_mesh.clear_surfaces()
 	if _tracer_list.is_empty():
 		return
@@ -522,7 +677,7 @@ func _draw_tracers(delta: float) -> void:
 		var k := clampf(tr.t / 0.35, 0.0, 1.0)
 		var p0 := a.lerp(b, maxf(0.0, k - 0.15))
 		var p1 := a.lerp(b, k)
-		tracer_mesh.surface_set_color(Color(0.4, 1.0, 0.95))
+		tracer_mesh.surface_set_color(tr.get("c", Color(0.24, 2.4, 2.1)))
 		tracer_mesh.surface_add_vertex(p0)
 		tracer_mesh.surface_add_vertex(p1)
 	tracer_mesh.surface_end()

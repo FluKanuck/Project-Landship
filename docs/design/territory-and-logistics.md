@@ -1,6 +1,7 @@
 # Territory Control & Logistics — design discussion
 
-Status: **open discussion**. Nothing here is decided until it moves to "Decisions".
+Status: **systems prototype built** (see `systems-prototype-plan.md`, "What was built").
+Ideas stay open until they move to "Decisions".
 
 ## What the wedge already has (the ground we build on)
 
@@ -235,7 +236,14 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - No new unit types beyond Swift, hauler and lifter; haulers and lifters can carry light defensive weapons.
 - Landship upgrades: a fixed number of slots, each with a size limit; any module within that size tier fits; each module has tiers.
 - Next step: a whole-system prototype (all the loops in, rough art), not another thin wedge. See `systems-prototype-plan.md`.
+- Built 21 Nov. While building: a module fits a slot of its size or bigger; the landship has
+  3 L / 4 M / 3 S slots; vehicles take one utility fit (pod / engineer / sling) plus an
+  optional light gun rather than the full slot system.
 
 ## Parked
 
-_(ideas raised and set aside)_
+- **Lifters carrying units** (a slung hauler, say). The sling carries kits today; slinging
+  vehicles needs a weight model first.
+- **Voice lines for the new callouts.** The text is in the comms log and subtitles; the
+  voices need the Piper voice files (the build environment can't reach Hugging Face).
+- **Fuel supply to a stranded hauler** by lifter. For now a dry hauler limps home on reserve.

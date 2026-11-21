@@ -92,7 +92,7 @@ func _process(delta: float) -> void:
 	if not active:
 		return
 	# follow the selected drone when the commander changes selection
-	if Sim.selected >= 0 and Sim.selected != which and not has_meta("pinned"):
+	if Sim.selected >= 0 and Sim.selected < Sim.drones.size() and Sim.selected != which and not has_meta("pinned"):
 		which = Sim.selected
 	for i in btns.size():
 		btns[i].set_pressed_no_signal(i == which)

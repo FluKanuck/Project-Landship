@@ -304,6 +304,73 @@ func interact() -> void:
 	get_tree().quit()
 
 
+func logiinteract() -> void:
+	# Drive the logistics screens only through the projected display, like a player.
+	var ev := InputEventKey.new()
+	ev.keycode = KEY_TAB
+	ev.physical_keycode = KEY_TAB
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await _frames(3)
+	ev = ev.duplicate()
+	ev.pressed = false
+	Input.parse_input_event(ev)
+	await _frames(3)
+	var mfd: MFD = main.bridge.projection.mfd
+	mfd.apply_preset("LOGISTICS", false)
+	await _wait(0.6)
+	var lp: LogisticsPanel = mfd.frames["logistics"].content
+	var mat0 := Sim.stores.mat
+	await click_mfd(lp.build_btns["kit_relay"])
+	await click_mfd(lp.build_btns["kit_turret"])
+	print("[ui] fab queue after clicks: ", Sim.fab.queue.map(func(i): return i.name), " mat ", int(mat0), " -> ", int(Sim.stores.mat))
+	var tac: TacticalPanel = mfd.frames["tactical"].content
+	var hb := tac.unit_ids.find(Sim.VEH_SEL)
+	await click_mfd(tac.unit_btns[hb])
+	print("[ui] selected ", Sim.selected_name())
+	await click_mfd(tac.vact_btns[VehicleSim.Act.LOAD])
+	await _frames(2)
+	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
+	var mp := tac.map.w2p(mine.pos) / tac.map.size
+	await click_mfd(tac.map, mp)
+	await click_mfd(tac.vact_btns[VehicleSim.Act.HOME])
+	await click_mfd(tac.map, Vector2(0.5, 0.5))
+	await click_mfd(tac.loop_btn)
+	var h: VehicleSim = Sim.vehicles[0]
+	print("[ui] hauler plan ", h.plan.map(func(w): return VehicleSim.ACT_NAMES[w.act]), " standing ", h.standing, " load at site ", Sim.site_at(h.plan[0].pos, 10.0) != null if not h.plan.is_empty() else false)
+	await click_mfd(tac.deploy_btn)
+	await _wait(0.5)
+	print("[ui] hauler after DEPLOY: ", h.status_text())
+	await mfd_shot("u1_logistics_clicked")
+	# fitting: put a stores bunker in the empty M slot
+	mfd.apply_preset("FITTING", false)
+	await _wait(0.6)
+	var fp: FittingPanel = mfd.frames["fitting"].content
+	await click_mfd(fp.slot_btns[6])
+	await _frames(4)
+	var target: Button = null
+	for b in fp.opt_btns:
+		if b.text.begins_with("STORES BUNKER"):
+			target = b
+	if target:
+		await click_mfd(target)
+	print("[ui] slot 7 selected ", fp.sel_slot + 1, " fab queue ", Sim.fab.queue.map(func(i): return i.name))
+	# landship crane plant through the tactical map
+	await click_mfd(tac.unit_btns[tac.unit_ids.find(-1)])
+	await _frames(2)
+	mfd.apply_preset("COMBAT", false)
+	await _wait(0.5)
+	await click_mfd(tac.plant_btn)
+	while tac.plant_kind != Logi.Kind.SCANNER:
+		await click_mfd(tac.plant_kit_btn)
+	var pp := tac.map.w2p(Sim.carrier.pos2() + Vector2(-220, 150)) / tac.map.size
+	var before := Sim.structures.size()
+	await click_mfd(tac.map, pp)
+	print("[ui] crane plant via map: structures ", before, " -> ", Sim.structures.size(), " (landship speed %.1f)" % Sim.carrier.speed)
+	await mfd_shot("u2_after_plant")
+	get_tree().quit()
+
+
 func events() -> void:
 	# lost link with a predicted track, action stations, ghosts with ages
 	Sim.select(1)
@@ -391,6 +458,35 @@ func look() -> void:
 	get_tree().quit()
 
 
+func sitegen() -> void:
+	# The site rules at the test-box size and at theatre sizes: counts, spacing, mix.
+	#   godot --headless --path . -- --scenario=sitegen --map-size=40000
+	var sizes := [10000.0, 40000.0, 100000.0]
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--map-size="):
+			sizes = [float(a.substr(11))]
+	for size in sizes:
+		var half: float = size * 0.5
+		var start := Vector2(0, half * 0.72)
+		var core := Vector2(half * 0.54, -half * 0.62)
+		var t0 := Time.get_ticks_msec()
+		var gen := SiteGen.generate(half, start, core, [], func(_p): return true, 11)
+		var kinds := [0, 0, 0]
+		var alien := 0
+		var rich := 0.0
+		var min_gap := INF
+		for i in gen.size():
+			kinds[gen[i].kind] += 1
+			alien += 1 if gen[i].owner == Logi.Owner.ALIEN else 0
+			rich += gen[i].richness
+			for j in range(i + 1, gen.size()):
+				min_gap = minf(min_gap, gen[i].pos.distance_to(gen[j].pos))
+		print("[sitegen] %5.0f km: %d sites (target %d)  F%d M%d FM%d  alien-held %d  mean richness %.2f  min spacing %.0f m  %d ms" % [
+			size / 1000.0, gen.size(), int(round((size / 1000.0) * (size / 1000.0) / Logi.SITE_KM2)), kinds[0], kinds[1], kinds[2],
+			alien, rich / maxf(gen.size(), 1), min_gap, Time.get_ticks_msec() - t0])
+	get_tree().quit()
+
+
 func logishots() -> void:
 	# the logistics screens, with a hub at the mine and a hauler on a standing route
 	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
@@ -451,6 +547,81 @@ func logishots() -> void:
 	main.player._blend = 1.0
 	await _wait(1.0)
 	await shot("g4_holo")
+	get_tree().quit()
+
+
+func logilook() -> void:
+	# exterior views of the supply war: a hub at the mine, a hauler at the pad, the lifter,
+	# a relay on high ground and an alien outpost
+	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
+	Sim.carrier.course.clear()
+	Sim.carrier.course.append(Vector2(1820, 1300))
+	Sim.set_throttle(2)
+	for i in 3000:
+		Sim._step(0.5)
+	for k in [[Logi.Kind.EXTRACTOR, Vector2(0, 0)], [Logi.Kind.TURRET, Vector2(-70, 60)], [Logi.Kind.PAD, Vector2(60, 70)]]:
+		Sim.crane_plant(k[0], mine.pos + k[1])
+	Sim.crane_plant(Logi.Kind.RELAY, Sim.carrier.pos2() + Vector2(-260, 200))
+	for i in 1200:
+		Sim._step(0.5)
+	var h: VehicleSim = Sim.vehicles[0]
+	Sim.refit_vehicle(h, "pod", true)
+	for i in 200:
+		Sim._step(0.5)
+	Sim.select(Sim.VEH_SEL + h.id)
+	Sim.tool_vact = VehicleSim.Act.LOAD
+	Sim.order_point(mine.pos)
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(mine.pos)
+	h.standing = true
+	Sim.deploy_vehicle(h)
+	var l: VehicleSim = Sim.vehicles[1]
+	Sim.select(Sim.VEH_SEL + l.id)
+	Sim.tool_vact = VehicleSim.Act.MOVE
+	Sim.order_point(mine.pos + Vector2(-400, 300))
+	Sim.deploy_vehicle(l)
+	var t0 := Sim.game_time
+	while Sim.game_time - t0 < 520.0:
+		for k in 40:
+			Sim._step(0.5)
+		await get_tree().process_frame
+	print("[look] hauler ", h.status_text(), " at ", h.pos2().round(), " lifter ", l.status_text())
+	var c := Camera3D.new()
+	main.world.add_child(c)
+	c.far = 20000.0
+	c.current = true
+	var t := Sim.terrain
+	var hp := Vector3(mine.pos.x, t.height_at(mine.pos.x, mine.pos.y), mine.pos.y)
+	c.global_position = hp + Vector3(-90, 45, 110)
+	c.look_at(hp + Vector3(0, 6, 0), Vector3.UP)
+	await _wait(1.0)
+	await shot("x1_hub")
+	c.global_position = h.pos + Vector3(-22, 10, 26)
+	c.look_at(h.pos + Vector3(0, 2, 0), Vector3.UP)
+	await _wait(0.6)
+	await shot("x2_hauler")
+	c.global_position = l.pos + Vector3(-20, 6, 24)
+	c.look_at(l.pos, Vector3.UP)
+	await _wait(0.6)
+	await shot("x3_lifter")
+	var rel: StructureSim = null
+	for s in Sim.structures:
+		if s.kind == Logi.Kind.RELAY:
+			rel = s
+	if rel:
+		var rp := rel.pos3(Sim)
+		c.global_position = rp + Vector3(40, 18, 50)
+		c.look_at(rp + Vector3(0, 12, 0), Vector3.UP)
+		await _wait(0.6)
+		await shot("x4_relay_and_ship")
+	for s in Sim.structures:
+		if s.kind == Logi.Kind.ALIEN_OUTPOST:
+			var op := s.pos3(Sim)
+			c.global_position = op + Vector3(-45, 20, 55)
+			c.look_at(op + Vector3(0, 5, 0), Vector3.UP)
+			await _wait(0.6)
+			await shot("x5_outpost")
+			break
 	get_tree().quit()
 
 

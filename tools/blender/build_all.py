@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.join(HERE, "assets"))
 
 import kit  # noqa: E402
 
-MODULES = ["crew", "bridge", "drone", "alien", "carrier", "environment"]
+MODULES = ["crew", "bridge", "drone", "alien", "carrier", "environment", "logistics"]
 SWATCH_PX = 8
 
 

@@ -162,7 +162,7 @@ func _shoot_prey(sim: SimCore, d, dist: float) -> void:
 		var roe_free: bool = d.current_roe() == DroneSim.Roe.FREE
 		var p_hit := 0.2 if roe_free else 0.11
 		if d is VehicleSim and d.is_hauler():
-			p_hit = 0.3
+			p_hit = 0.18
 		if rng.randf() < p_hit * (1.0 - dist / GUN_RANGE * 0.5):
 			d.take_hit(sim, pos2())
 		elif d is DroneSim:
@@ -224,7 +224,7 @@ func _assault(dt: float, sim: SimCore) -> void:
 		if fire_cd <= 0.0:
 			fire_cd = 1.6
 			shots.append({"from": pos + Vector3.UP * 1.5, "to": s.pos3(sim) + Vector3.UP * 4.0, "t": 0.0})
-			if rng.randf() < 0.45:
+			if rng.randf() < 0.3:
 				s.take_hit(sim, true)
 	# vehicles that come to help get shot
 	var v = sim.nearest_prey(pos2(), GUN_RANGE)

@@ -58,7 +58,7 @@ func _ready() -> void:
 
 
 func frame_subtitle() -> String:
-	return "HUBS %d   VEHICLES %d   KITS ABOARD %d" % [Sim.hubs().size(), Sim.vehicles.filter(func(v): return v.state != VehicleSim.State.DESTROYED).size(), Sim.kits_total()]
+	return "HUBS %d   VEHICLES %d   KITS ABOARD %d" % [Sim.known_hubs().size(), Sim.vehicles.filter(func(v): return v.state != VehicleSim.State.DESTROYED).size(), Sim.kits_total()]
 
 
 func _process(_d: float) -> void:
@@ -97,14 +97,14 @@ func _draw_board() -> void:
 	y += 20
 	ci.draw_string(f, Vector2(4, y), "HUB         KIND  LINK  STOCK F / M   PARTS", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Pal.UI_DIM)
 	y += 22
-	var hubs := Sim.hubs()
+	var hubs := Sim.known_hubs()
 	# sites we lost but still remember as ours show as dark until re-seen
 	if hubs.is_empty():
 		ci.draw_string(f, Vector2(4, y), "NO HUBS. FIND A SITE, PLANT AN EXTRACTOR, A TURRET AND A PAD.", HORIZONTAL_ALIGNMENT_LEFT, w - 8, 16, Pal.UI_DIM)
 		y += 22
 	for s in hubs:
-		var linked := s.linked
-		var stock: Array = s.stock if linked else s.known_stock
+		var linked := s.linked and s.owner == Logi.Owner.PLAYER
+		var stock: Array = s.known_stock
 		var col := Pal.UI_FRIEND if linked else Color(Pal.UI_FRIEND, 0.5)
 		if linked and s.under_attack > 0.0:
 			col = Pal.UI_ENEMY

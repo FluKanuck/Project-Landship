@@ -228,10 +228,11 @@ func _sites() -> void:
 		if not s.discovered:
 			continue
 		var p := w2p(s.pos)
-		var owner := s.owner if (s.linked or s.owner != Logi.Owner.PLAYER) else s.known_owner
+		var owner := s.known_owner
+		var seen_now := s.known_time >= Sim.game_time - 1.0
 		var col := Pal.UI_TEXT
 		if owner == Logi.Owner.PLAYER:
-			col = Pal.UI_FRIEND if s.linked else Color(Pal.UI_FRIEND, 0.45)
+			col = Pal.UI_FRIEND if s.known_time >= Sim.game_time - 1.0 else Color(Pal.UI_FRIEND, 0.45)
 		elif owner == Logi.Owner.ALIEN:
 			col = Pal.UI_ENEMY
 		var r := maxf(12.0, m2px(Logi.SITE_RADIUS))
@@ -244,15 +245,15 @@ func _sites() -> void:
 		var line2 := ""
 		match owner:
 			Logi.Owner.PLAYER:
-				var st: Array = s.stock if s.linked else s.known_stock
+				var st: Array = s.known_stock
 				line2 = "F%d M%d" % [int(st[0]), int(st[1])]
-				if not s.linked:
+				if not seen_now:
 					line2 += "  DARK +" + Sim.age_text(Sim.game_time - s.known_time)
 				elif s.under_attack > 0.0:
 					line2 += "  UNDER ATTACK"
 			Logi.Owner.ALIEN:
 				line2 = "ALIEN"
-				if s.known_time >= 0.0 and not Sim.net.covers(s.pos):
+				if s.known_time >= 0.0 and not seen_now:
 					line2 += " +" + Sim.age_text(Sim.game_time - s.known_time)
 			_:
 				if s.salvage > 1.0 or s.stock[0] + s.stock[1] > 1.0:
