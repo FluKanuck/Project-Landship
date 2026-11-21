@@ -371,6 +371,61 @@ func logiinteract() -> void:
 	get_tree().quit()
 
 
+func livesoak() -> void:
+	# Real-time soak through every visual path: build a hub, run routes, force a raid on
+	# it, hold x64 compression (re-raised after every contact drop), then look around.
+	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
+	Sim.carrier.course.clear()
+	Sim.carrier.course.append(Vector2(1820, 1300))
+	Sim.set_throttle(2)
+	for i in 3000:
+		Sim._step(0.5)
+	for k in [[Logi.Kind.EXTRACTOR, Vector2(0, 0)], [Logi.Kind.TURRET, Vector2(-70, 60)], [Logi.Kind.PAD, Vector2(60, 70)]]:
+		Sim.crane_plant(k[0], mine.pos + k[1])
+	for i in 400:
+		Sim._step(0.5)
+	var h: VehicleSim = Sim.vehicles[0]
+	Sim.refit_vehicle(h, "pod", true)
+	for i in 200:
+		Sim._step(0.5)
+	Sim.select(Sim.VEH_SEL + h.id)
+	Sim.tool_vact = VehicleSim.Act.LOAD
+	Sim.order_point(mine.pos)
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(mine.pos)
+	h.standing = true
+	Sim.deploy_vehicle(h)
+	var l: VehicleSim = Sim.vehicles[1]
+	Sim.select(Sim.VEH_SEL + l.id)
+	Sim.tool_vact = VehicleSim.Act.BUILD
+	Sim.tool_kit = Logi.Kind.SCANNER
+	Sim.order_point(Vector2(800, -400))
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(Vector2.ZERO)
+	Sim.deploy_vehicle(l)
+	Sim.queue_build("kit_relay")
+	Sim.queue_module(6, "stores", 0)
+	Sim._hub_raid_timer = 600.0
+	var errors_before := 0
+	var t_real := 0.0
+	main.bridge.projection.mfd.apply_preset("LOGISTICS", false)
+	while t_real < 75.0:
+		if Sim.time_scale() < 64:
+			Sim.set_scale_idx(3)
+		await _wait(0.5)
+		t_real += 0.5
+	Sim.set_scale_idx(0)
+	print("[soak] game ", Sim.clock_text(), " F%.0f M%.0f kills %d hubs %d" % [Sim.stores.fuel, Sim.stores.mat, Sim.kills, Sim.hubs().size()])
+	for v in Sim.vehicles:
+		print("[soak] ", v.callsign, " ", v.status_text(), " trips ", v.trips)
+	await mfd_shot("s1_logistics_after_soak")
+	main.bridge.projection.mfd.apply_preset("COMBAT", false)
+	await _wait(1.0)
+	await mfd_shot("s2_combat_after_soak")
+	await shot("s3_seated")
+	get_tree().quit()
+
+
 func events() -> void:
 	# lost link with a predicted track, action stations, ghosts with ages
 	Sim.select(1)
