@@ -170,11 +170,41 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - Balance levers: yield rate, stockpile cap, distance to the landship's likely track, and
   exposure (open flats vs broken ground for haulers).
 
-## Open questions (round 4)
-1. **Air lifters:** do we still want them for small, urgent loads, or is it all ground hauling?
-2. **Landship fuel:** how long should a full tank last at cruise? (Proposal: 4–6 h game time.)
-3. **Theatre scale:** for the final map, should the landship's data link bubble and drone
-   ranges grow too, or do relays carry the whole job of covering a big map?
+## Round 4 detail (21 Nov)
+
+### Air lifters stay
+- They carry **small, fast loads** (a fuel bladder or materials pod) and **units**: a
+  sling-loaded light vehicle, an engineer kit, a relay or scanner.
+- That gives air two jobs ground can't do quickly: urgent resupply, and fast placement of
+  relays and scanners on high ground haulers can't reach.
+- Limits: they need a link, are exposed to raider fire, carry small loads and burn fuel.
+
+### Landship fuel: a slow strategic gauge
+- Longer than the 4–6 h proposal. Fuel **should not be a constant concern**.
+- Intent: the tank is a slow pressure that only bites when the network is neglected or
+  you push far beyond it. Day-to-day, fuel matters through **sorties and vehicle runs**,
+  not through the landship's tank.
+- Keep the current tank (~26 h cruise) as the baseline and retune once the large map exists.
+
+### Coverage on the large map: relays + landship upgrades
+- The landship's base ranges stay modest. Coverage grows through:
+  - **Relays** in the field (territory).
+  - **Upgradable facilities aboard the landship**, built with materials. Candidates:
+    - Comms mast: data link range.
+    - Sensor suite: landship sensor range.
+    - Hangar: drone and lifter capacity, drone endurance.
+    - Fabricator: build speed, kit size.
+    - Crane rig / elevator: loading speed, heavier lifts.
+- The two routes trade off: relays are cheap and far-reaching but can be cut; upgrades are
+  expensive and safe, and travel with you.
+
+## Open questions (round 5)
+1. **Units carried by lifters:** which units are in scope beyond Swifts, haulers and lifters
+   (e.g. a light armed escort for haulers)?
+2. **Upgrade structure:** a short linear tier per facility (I/II/III), or slots where you pick
+   what to fit?
+3. **Next step:** turn this into a scoped "wedge 2" prototype plan (one hub, one relay, one
+   hauler, raider looting) so we can test the loop?
 
 ## Decisions
 
@@ -188,6 +218,9 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - The engineering vehicle is a hauler fitted with an engineer kit.
 - Clearing an alien site yields whatever is lootable there, plus the site itself.
 - Resource sites are specified by density and spacing (not a fixed count) so the rules scale to the much larger final map; exact numbers come from balancing.
+- Air lifters stay: small, fast loads and units.
+- Landship fuel is a slow strategic gauge, not a constant concern; keep about today's endurance and tune later.
+- Coverage on the large map comes from relays plus upgradable facilities aboard the landship.
 
 ## Parked
 
