@@ -84,7 +84,7 @@ which is the only depot and the only factory.
 | Structure | Does | Notes |
 | --- | --- | --- |
 | **Light extraction hub** | Extracts into a local stockpile (capped). Basic point defence. Loading pad for lifters and a ramp for haulers. | A full stockpile stops extracting. A hub is a target. |
-| **Data link relay** | Extends the C4I bubble (today 5 km around the landship). Relays chain. | Loses link if destroyed, and cuts off everything downstream (the CoH "cutoff"). |
+| **Data link relay** | Extends the C4I bubble (today 5 km around the landship). Relays chain. | If destroyed, everything downstream loses link (the CoH "cutoff"). |
 | **Scanner post** | Fixed sensor: live enemy positions under its footprint, and keeps terrain knowledge fresh. | Only reports while linked. Unlinked scanners buffer and burst, like drones today. |
 
 ### Transport
