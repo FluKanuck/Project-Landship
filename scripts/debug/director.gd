@@ -85,12 +85,132 @@ func simtest() -> void:
 	get_tree().quit()
 
 
+func logitest() -> void:
+	# Headless soak of the supply war: crane-plant a hub at the mine, run a standing hauler
+	# route, sling a relay and a scanner out, then let the aliens find the network.
+	Sim.event.connect(func(k, data):
+		if not k in ["contact_new", "contact_lost", "contact_class", "waypoint_added", "helm_waypoint"]:
+			print("  %s %-24s %s" % [Sim.clock_text(), k, _brief(data)]))
+	Sim.running = false
+	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
+	Sim.set_throttle(2)
+	Sim.carrier.course.clear()
+	Sim.carrier.course.append(Vector2(1820, 1300))
+	_run_for(1500.0)
+	print("[logi] at mine: carrier ", Sim.carrier.pos2().round(), " dist ", int(Sim.carrier.pos2().distance_to(mine.pos)))
+	for k in [[Logi.Kind.EXTRACTOR, Vector2(0, 0)], [Logi.Kind.TURRET, Vector2(-70, 60)], [Logi.Kind.PAD, Vector2(60, 70)]]:
+		var ok := Sim.crane_plant(k[0], mine.pos + k[1])
+		print("[logi] crane plant ", Logi.KIND_NAMES[k[0]], " ", ok)
+	Sim.queue_build("kit_relay")
+	Sim.queue_build("kit_turret")
+	_run_for(600.0)
+	# hauler: standing route mine -> landship
+	var h: VehicleSim = Sim.vehicles[0]
+	Sim.select(Sim.VEH_SEL + h.id)
+	Sim.tool_roe = DroneSim.Roe.FLEE
+	Sim.tool_vact = VehicleSim.Act.LOAD
+	Sim.order_point(mine.pos)
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(mine.pos)
+	h.standing = true
+	print("[logi] hauler deploy ", Sim.deploy_vehicle(h), " ", h.note)
+	# lifter: sling the relay out north-west towards the oasis, then come home
+	var l: VehicleSim = Sim.vehicles[1]
+	Sim.select(Sim.VEH_SEL + l.id)
+	Sim.tool_vact = VehicleSim.Act.BUILD
+	Sim.tool_kit = Logi.Kind.RELAY
+	Sim.order_point(Vector2(-900, 600))
+	Sim.tool_kit = Logi.Kind.SCANNER
+	Sim.order_point(Vector2(-2000, -300))
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(Vector2.ZERO)
+	print("[logi] lifter deploy ", Sim.deploy_vehicle(l), " kits ", l.kits)
+	Sim.set_throttle(1)
+	Sim.carrier.course.append(Vector2(800, 1200))
+	for hour in 14:
+		_run_for(3600.0)
+		_logi_report()
+		if hour == 2:
+			# a second hub at the oasis by engineer hauler once kits are ready
+			Sim.queue_build("kit_extractor")
+			Sim.queue_build("kit_pad")
+		if hour == 3:
+			Sim.queue_build("hauler")
+		if hour == 4 and Sim.vehicles.size() > 2:
+			# the new hauler takes an engineer kit and builds a hub at the oasis
+			var e: VehicleSim = Sim.vehicles[2]
+			print("[logi] refit ", e.callsign, " ", Sim.refit_vehicle(e, "engineer", true))
+			_run_for(70.0)
+			var oasis: SiteSim = Sim.site_at(Terrain.OASIS, 50.0)
+			print("[logi] oasis site ", oasis.label(), " linked ", Sim.net.covers(oasis.pos))
+			Sim.select(Sim.VEH_SEL + e.id)
+			Sim.tool_roe = DroneSim.Roe.RTRN
+			Sim.tool_vact = VehicleSim.Act.BUILD
+			Sim.tool_kit = Logi.Kind.EXTRACTOR
+			Sim.order_point(oasis.pos + Vector2(-40, 0))
+			Sim.tool_kit = Logi.Kind.PAD
+			Sim.order_point(oasis.pos + Vector2(60, 40))
+			Sim.tool_vact = VehicleSim.Act.HOME
+			Sim.order_point(oasis.pos)
+			print("[logi] engineer deploy ", Sim.deploy_vehicle(e), " kits ", e.kits)
+		if hour == 7:
+			# the oasis hauler: second standing route
+			var l2: VehicleSim = Sim.vehicles[1]
+			l2.plan.clear()
+			Sim.refit_vehicle(l2, "pod", false)
+			_run_for(70.0)
+			var oasis: SiteSim = Sim.site_at(Terrain.OASIS, 50.0)
+			Sim.select(Sim.VEH_SEL + l2.id)
+			Sim.tool_vact = VehicleSim.Act.LOAD
+			Sim.order_point(oasis.pos)
+			Sim.tool_vact = VehicleSim.Act.HOME
+			Sim.order_point(oasis.pos)
+			l2.standing = true
+			print("[logi] lifter route deploy ", Sim.deploy_vehicle(l2))
+	print("[logitest] done kills ", Sim.kills, " alien stock %.0f" % Sim.alien_stock, " built ", Sim.fab.built)
+	get_tree().quit()
+
+
+func _run_for(sec: float) -> void:
+	var n := int(sec / 0.5)
+	for i in n:
+		Sim._step(0.5)
+
+
+func _logi_report() -> void:
+	var st := Sim.stores
+	print("[t] %s FUEL %.0f/%.0f MAT %.0f/%.0f  delivered F%.0f M%.0f  fab %s  kits %s" % [Sim.clock_text(), st.fuel, st.cap(0), st.mat, st.cap(1),
+		st.delivered[0], st.delivered[1], ",".join(Sim.fab.queue.map(func(i): return i.name)), str(Sim.kit_bay)])
+	for s in Sim.sites:
+		if s.owner != Logi.Owner.NONE or s.discovered:
+			var parts := []
+			for x in s.structures(Sim):
+				parts.append("%s(%s)" % [Logi.KIND_SHORT[x.kind], x.status_text()])
+			if s.owner == Logi.Owner.PLAYER or s.owner == Logi.Owner.ALIEN:
+				print("     site %-10s %s owner %d linked %s stock F%.0f M%.0f salv %.0f  %s" % [s.name, Logi.SITE_KIND_SHORT[s.kind], s.owner, s.linked, s.stock[0], s.stock[1], s.salvage, " ".join(parts)])
+	for v in Sim.vehicles:
+		print("     %s %s %s cargo F%.0f M%.0f trips %d hauled F%.0f M%.0f hp %d fuel %.0f link %d" % [v.callsign, v.fit_text(), v.status_text(), v.cargo[0], v.cargo[1], v.trips, v.hauled[0], v.hauled[1], v.hp, v.fuel, v.link])
+	for x in Sim.structures:
+		if x.site < 0:
+			print("     %s at %s %s linked %s x%.2f" % [x.name(), x.pos.round(), x.status_text(), x.linked, x.range_mult])
+	var rs := []
+	for r in Sim.raiders:
+		rs.append("%d:%s e%.2f" % [r.id, RaiderSim.STATE_NAMES[r.state], r.energy])
+	print("     raiders ", " ".join(rs), "  alien stock %.0f" % Sim.alien_stock, "  net nodes ", Sim.net.nodes.size())
+
+
 func _brief(d: Dictionary) -> String:
 	var out := []
 	for k in d:
 		var v = d[k]
 		if v is DroneSim:
 			out.append(v.callsign)
+		elif v is VehicleSim:
+			out.append(v.callsign)
+		elif v is SiteSim:
+			out.append("site=" + v.name)
+		elif v is StructureSim:
+			out.append("%s#%d" % [Logi.KIND_SHORT[v.kind], v.id])
 		elif v is float:
 			out.append("%s=%.0f" % [k, v])
 		else:
@@ -268,6 +388,69 @@ func look() -> void:
 	c.look_at(Vector3(o.x, h, o.y), Vector3.UP)
 	await _wait(0.8)
 	await shot("l4_oasis")
+	get_tree().quit()
+
+
+func logishots() -> void:
+	# the logistics screens, with a hub at the mine and a hauler on a standing route
+	var mine: SiteSim = Sim.site_at(Terrain.MINE, 50.0)
+	Sim.carrier.course.clear()
+	Sim.carrier.course.append(Vector2(1820, 1300))
+	Sim.set_throttle(2)
+	for i in 3000:
+		Sim._step(0.5)
+	for k in [[Logi.Kind.EXTRACTOR, Vector2(0, 0)], [Logi.Kind.TURRET, Vector2(-70, 60)], [Logi.Kind.PAD, Vector2(60, 70)]]:
+		Sim.crane_plant(k[0], mine.pos + k[1])
+	Sim.queue_build("kit_relay")
+	Sim.queue_build("kit_scanner")
+	Sim.queue_module(9, "baffles", 0)
+	for i in 1200:
+		Sim._step(0.5)
+	var h: VehicleSim = Sim.vehicles[0]
+	Sim.select(Sim.VEH_SEL + h.id)
+	Sim.tool_vact = VehicleSim.Act.LOAD
+	Sim.order_point(mine.pos)
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(mine.pos)
+	h.standing = true
+	Sim.deploy_vehicle(h)
+	var l: VehicleSim = Sim.vehicles[1]
+	Sim.select(Sim.VEH_SEL + l.id)
+	Sim.tool_vact = VehicleSim.Act.BUILD
+	Sim.tool_kit = Logi.Kind.RELAY
+	Sim.order_point(Vector2(-900, 600))
+	Sim.tool_vact = VehicleSim.Act.HOME
+	Sim.order_point(Vector2.ZERO)
+	Sim.deploy_vehicle(l)
+	Sim.select(0)
+	Sim.tool_act = DroneSim.Act.SCAN
+	Sim.order_point(Vector2(-2500, -900))
+	Sim.launch(0)
+	Sim.set_throttle(1)
+	for i in 4200:
+		Sim._step(0.5)
+	Sim.select(Sim.VEH_SEL + h.id)
+	var mfd: MFD = main.bridge.projection.mfd
+	mfd.apply_preset("LOGISTICS", false)
+	await _wait(1.5)
+	await mfd_shot("g1_logistics")
+	mfd.apply_preset("FITTING", false)
+	(mfd.frames["fitting"].content as FittingPanel).sel_slot = 3
+	await _wait(1.5)
+	await mfd_shot("g2_fitting")
+	Sim.select(-1)
+	mfd.apply_preset("COMBAT", false)
+	var tac: TacticalPanel = mfd.frames["tactical"].content
+	tac.plant_on = true
+	tac.plant_kind = Logi.Kind.RELAY
+	tac.map.hover = tac.map.w2p(Sim.carrier.pos2() + Vector2(250, 120))
+	await _wait(1.5)
+	await mfd_shot("g3_combat_plant")
+	print("[director] logistics F%.0f M%.0f delivered %s" % [Sim.stores.fuel, Sim.stores.mat, str(Sim.stores.delivered)])
+	main.player._switch(Player.Mode.TABLE)
+	main.player._blend = 1.0
+	await _wait(1.0)
+	await shot("g4_holo")
 	get_tree().quit()
 
 

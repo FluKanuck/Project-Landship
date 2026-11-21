@@ -109,8 +109,7 @@ func _process(delta: float) -> void:
 	if not d.airborne():
 		link = 1.0 if d.state in [DroneSim.State.READY, DroneSim.State.REFUEL] else 0.0
 	else:
-		var dist := d.pos2().distance_to(Sim.carrier.pos2())
-		link = clampf(1.0 - (dist - Sim.LINK_OK) / (Sim.LINK_MAX - Sim.LINK_OK), 0.0, 1.0)
+		link = Sim.link_quality(d.pos2())
 		if d.link == DroneSim.Link.LOST:
 			link = 0.0
 	if d.state == DroneSim.State.DESTROYED or d.state == DroneSim.State.REBUILD:

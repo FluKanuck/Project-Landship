@@ -134,6 +134,19 @@ func _unhandled_input(ev: InputEvent) -> void:
 	for i in 3:
 		if ev.is_action_pressed("select_%d" % (i + 1)):
 			Sim.select(i if i < 2 else -1)
+	if ev.is_action_pressed("select_vehicle"):
+		# cycle the haulers and lifters
+		var n := Sim.vehicles.size()
+		var start := Sim.selected - Sim.VEH_SEL if Sim.selected >= Sim.VEH_SEL else -1
+		for k in n:
+			var i := (start + 1 + k) % n
+			if Sim.vehicles[i].state != VehicleSim.State.DESTROYED:
+				Sim.select(Sim.VEH_SEL + i)
+				break
+	if ev.is_action_pressed("preset_5"):
+		bridge.projection.mfd.apply_preset("LOGISTICS")
+	if ev.is_action_pressed("preset_6"):
+		bridge.projection.mfd.apply_preset("FITTING")
 	if mode in [Mode.SEATED, Mode.WALK]:
 		for i in 4:
 			if ev.is_action_pressed("preset_%d" % (i + 1)):

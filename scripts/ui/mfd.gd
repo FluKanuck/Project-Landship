@@ -12,10 +12,13 @@ const PRESETS := {
 	"COMBAT": {"tactical": Rect2(0, 0, 0.58, 1), "feed": Rect2(0.58, 0, 0.42, 0.56), "contacts": Rect2(0.58, 0.56, 0.42, 0.44)},
 	"RECON": {"feed": Rect2(0, 0, 0.6, 1), "tactical": Rect2(0.6, 0, 0.4, 0.62), "comms": Rect2(0.6, 0.62, 0.4, 0.38)},
 	"TRANSIT": {"tactical": Rect2(0, 0, 0.5, 1), "helm": Rect2(0.5, 0, 0.5, 0.5), "extcam": Rect2(0.5, 0.5, 0.25, 0.5), "comms": Rect2(0.75, 0.5, 0.25, 0.5)},
+	"LOGISTICS": {"tactical": Rect2(0, 0, 0.52, 1), "logistics": Rect2(0.52, 0, 0.48, 0.64), "comms": Rect2(0.52, 0.64, 0.48, 0.36)},
+	"FITTING": {"fitting": Rect2(0, 0, 0.55, 1), "tactical": Rect2(0.55, 0, 0.45, 0.58), "logistics": Rect2(0.55, 0.58, 0.45, 0.42)},
 }
 const TITLES := {
 	"tactical": "TACTICAL", "feed": "DRONE FEED", "contacts": "SENSORS / CONTACTS",
 	"helm": "HELM / TIME", "comms": "COMMS LOG", "extcam": "FWD CAMERA",
+	"logistics": "LOGISTICS", "fitting": "FITTING",
 }
 
 var frames := {}
@@ -42,6 +45,8 @@ func setup(w: WorldView) -> void:
 		"helm": func(): return HelmPanel.new(),
 		"comms": func(): return CommsPanel.new(),
 		"extcam": func(): return ExtCamPanel.new(w),
+		"logistics": func(): return LogisticsPanel.new(),
+		"fitting": func(): return FittingPanel.new(),
 	}
 	for k in builders:
 		var f := PanelFrame.new(k, TITLES[k], builders[k].call())
@@ -70,6 +75,37 @@ func _on_event(kind: String, data: Dictionary) -> void:
 		"link_lost":
 			_alarm = 2.0
 			_alarm_text = "LINK LOST  %s  ORDERS LOCKED" % data.drone.callsign
+		"structure_attacked":
+			_alarm = 3.0
+			_alarm_text = ("%s UNDER ATTACK" % data.site.name) if data.site else ("%s UNDER ATTACK" % data.s.name())
+			_flash(["logistics", "tactical"])
+		"structure_lost":
+			_alarm = 3.0
+			_alarm_text = ("%s: %s LOST" % [data.site.name, Logi.KIND_NAMES[data.s.kind]]) if data.site else ("%s LOST: NETWORK CUT" % data.s.name())
+			_flash(["logistics", "tactical"])
+		"veh_lost":
+			_alarm = 2.5
+			_alarm_text = "%s LOST" % data.veh.callsign
+			_flash(["logistics"])
+		"veh_fire", "veh_breaking":
+			_alarm = 2.0
+			_alarm_text = "%s UNDER FIRE" % data.veh.callsign
+		"hub_dark":
+			_alarm = 2.0
+			_alarm_text = "%s GONE DARK" % data.site.name
+		"alien_outpost":
+			if data.seen:
+				_alarm = 3.5
+				_alarm_text = "ALIEN OUTPOST AT %s" % data.site.name
+		"objective":
+			_alarm = 2.5
+			_alarm_text = "OBJECTIVE: " + data.text
+
+
+func _flash(keys: Array) -> void:
+	for k in keys:
+		if frames.has(k):
+			frames[k].flash = 1.2
 
 
 func apply_preset(name: String, animate := true) -> void:
@@ -173,7 +209,7 @@ func _draw() -> void:
 	x = _strip(f, x, Sim.clock_text(), Pal.UI_TEXT, 22) + 22
 	var tc := Sim.time_scale()
 	x = _strip(f, x, "TIME x%d" % tc, Pal.UI_WARN if tc > 1 else Pal.UI_TEXT, 22) + 22
-	var sel := "LANDSHIP" if Sim.selected == -1 else Sim.drones[Sim.selected].callsign
+	var sel := Sim.selected_name()
 	x = _strip(f, x, "CMD " + sel, Pal.UI_FRIEND, 22) + 22
 	var live := 0
 	var ghosts := 0
@@ -182,13 +218,16 @@ func _draw() -> void:
 			live += 1
 		else:
 			ghosts += 1
-	x = _strip(f, x, "CONTACTS %d LIVE / %d GHOST" % [live, ghosts], Pal.UI_ENEMY if live > 0 else Pal.UI_TEXT, 22) + 22
-	_strip(f, x, preset, Pal.UI_DIM, 20)
+	x = _strip(f, x, "CONTACTS %d/%d" % [live, ghosts], Pal.UI_ENEMY if live > 0 else Pal.UI_TEXT, 22) + 20
+	var st := Sim.stores
+	x = _strip(f, x, "F %d" % int(st.fuel), Pal.UI_TEXT if st.frac(0) > 0.2 else Pal.UI_ENEMY, 22) + 12
+	x = _strip(f, x, "M %d" % int(st.mat), Pal.UI_TEXT if st.mat > 30 else Pal.UI_WARN, 22) + 20
+	x = _strip(f, x, preset, Pal.UI_DIM, 20) + 20
 	# objective, right-hand end of the strip
-	var obj := "OBJ COMPLETE: RAIDER BASE LOCATED" if Sim.node_found else "OBJ: LOCATE THE RAIDER BASE"
-	var ow := f.get_string_size(obj, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
-	if not Sim.alert:
-		draw_string(f, Vector2(size.x - ow - 14, 27), obj, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Pal.UI_FRIEND if Sim.node_found else Pal.UI_DIM)
+	var obj := "OBJ: " + Sim.objective()
+	var ow := f.get_string_size(obj, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+	if not Sim.alert and x + ow < size.x - 10:
+		draw_string(f, Vector2(size.x - ow - 14, 27), obj, HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Pal.UI_DIM)
 	# the jolt: a red banner and frame pulse when something happens out there
 	if _alarm > 0.0:
 		var a := clampf(_alarm, 0.0, 1.0) * (0.55 + 0.45 * sin(_t * 14.0))

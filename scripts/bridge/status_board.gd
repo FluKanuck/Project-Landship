@@ -53,6 +53,13 @@ func _draw_board() -> void:
 			link = ["", "  LINK WEAK", "  NO LINK"][d.link]
 		_c.draw_string(f, Vector2(24, y), "%s  %s%s" % [d.callsign, d.status_text(), link], HORIZONTAL_ALIGNMENT_LEFT, -1, 28, col)
 		y += 38
-	_c.draw_string(f, Vector2(24, y + 6), "LANDSHIP  %s  FUEL %d%%" % [CarrierSim.THROTTLE_NAMES[Sim.carrier.throttle], int(Sim.carrier.fuel * 100.0)], HORIZONTAL_ALIGNMENT_LEFT, -1, 28, ink)
-	var obj := "OBJECTIVE COMPLETE: RAIDER BASE LOCATED" if Sim.node_found else "OBJECTIVE: LOCATE THE RAIDER BASE"
-	_c.draw_string(f, Vector2(24, s.y - 22), obj, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Pal.UI_FRIEND if Sim.node_found else Pal.UI_DIM)
+	_c.draw_string(f, Vector2(24, y + 6), "LANDSHIP  %s  FUEL %d  MAT %d" % [CarrierSim.THROTTLE_NAMES[Sim.carrier.throttle], int(Sim.stores.fuel), int(Sim.stores.mat)], HORIZONTAL_ALIGNMENT_LEFT, -1, 28, ink)
+	y += 44
+	for v in Sim.vehicles:
+		if v.state == VehicleSim.State.DESTROYED or y > s.y - 70:
+			continue
+		var col := Pal.UI_FRIEND if v.is_out() else Pal.UI_DIM
+		_c.draw_string(f, Vector2(24, y), "%s  %s%s" % [v.callsign, v.status_text(), "  LOOP" if v.standing else ""], HORIZONTAL_ALIGNMENT_LEFT, s.x - 40, 26, col)
+		y += 34
+	var obj := "OBJECTIVE: " + Sim.objective()
+	_c.draw_string(f, Vector2(24, s.y - 22), obj, HORIZONTAL_ALIGNMENT_LEFT, s.x - 40, 24, Pal.UI_DIM)

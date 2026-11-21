@@ -25,7 +25,7 @@ func _draw() -> void:
 	# sensors
 	draw_string(f, Vector2(8, y), "SENSORS", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Pal.UI_DIM)
 	y += 26
-	draw_string(f, Vector2(8, y), "LANDSHIP  SEARCH RADAR   %.1f KM  ACTIVE" % (CarrierSim.SENSOR_RANGE / 1000.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Pal.UI_TEXT)
+	draw_string(f, Vector2(8, y), "LANDSHIP  SEARCH RADAR   %.1f KM  ACTIVE" % (Sim.carrier_sensor() / 1000.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Pal.UI_TEXT)
 	y += 24
 	for d in Sim.drones:
 		var st := "ON DECK"
@@ -56,7 +56,7 @@ func _draw() -> void:
 	if rows.is_empty():
 		draw_string(f, Vector2(8, y + 10), "NO CONTACTS. SEND A SCOUT, WATCH THE GAPS.", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Pal.UI_DIM)
 	for ct in rows:
-		if y > size.y - 10:
+		if y > size.y - (36 if Sim.node_found else 10):
 			break
 		var p := Vector2(ct.pos.x, ct.pos.z)
 		var id := ("R-%d" if ct["class"] == "RAIDER" else "H-%d") % (ct.id + 1)

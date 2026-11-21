@@ -80,7 +80,7 @@ func status_text() -> String:
 		State.FINAL: return "LANDING"
 		State.REFUEL: return "REFUEL %d:%02d" % [int(timer) / 60, int(timer) % 60]
 		State.DESTROYED: return "LOST"
-		State.REBUILD: return "FAB %d:%02d" % [int(timer) / 60, int(timer) % 60]
+		State.REBUILD: return "FAB WAIT MAT" if timer < 0.0 else "FAB %d:%02d" % [int(timer) / 60, int(timer) % 60]
 	return "?"
 
 
@@ -112,8 +112,15 @@ func step(dt: float, sim: SimCore) -> void:
 			_park(sim)
 		State.REFUEL:
 			_park(sim)
+			# refuelling draws on the landship's tank; an empty tank stalls it
+			var want := minf(ENDURANCE - fuel, ENDURANCE * dt / REFUEL_TIME)
+			if not is_shadow and want > 0.0:
+				var got := sim.stores.take(Logi.Res.FUEL, want / 3600.0 * Logi.DRONE_FUEL_PER_HOUR)
+				want = got / Logi.DRONE_FUEL_PER_HOUR * 3600.0
+				if want <= 0.0:
+					return
+			fuel = minf(ENDURANCE, fuel + want)
 			timer -= dt
-			fuel = minf(ENDURANCE, fuel + ENDURANCE * dt / REFUEL_TIME)
 			if timer <= 0.0:
 				state = State.READY
 				fuel = ENDURANCE
@@ -121,14 +128,7 @@ func step(dt: float, sim: SimCore) -> void:
 				if not is_shadow:
 					sim.emit_event("drone_ready", {"drone": self})
 		State.REBUILD:
-			timer -= dt
-			if timer <= 0.0:
-				state = State.READY
-				fuel = ENDURANCE
-				hp = 3
-				plan.clear()
-				_park(sim)
-				sim.emit_event("drone_rebuilt", {"drone": self})
+			pass # the fabricator builds the replacement; see SimCore.fab_done
 		State.DESTROYED:
 			pos.y = maxf(pos.y - 60.0 * dt, sim.terrain.height_at(pos.x, pos.z))
 		State.LAUNCH:
@@ -138,7 +138,7 @@ func step(dt: float, sim: SimCore) -> void:
 		State.RTB, State.FINAL:
 			_rtb(dt, sim)
 	if airborne() and not is_shadow:
-		fuel -= dt
+		fuel -= dt / float(sim.fitting.stat("endurance_mult"))
 		if fuel <= 0.0:
 			_destroy(sim, "fuel")
 		elif state == State.ACTIVE:
@@ -326,3 +326,12 @@ func _destroy(sim: SimCore, why: String) -> void:
 func begin_rebuild() -> void:
 	state = State.REBUILD
 	timer = REBUILD_TIME
+
+
+func finish_rebuild(sim: SimCore) -> void:
+	state = State.READY
+	fuel = ENDURANCE
+	hp = 3
+	plan.clear()
+	_park(sim)
+	sim.emit_event("drone_rebuilt", {"drone": self})

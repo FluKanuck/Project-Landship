@@ -154,6 +154,28 @@ func is_hard_ground(x: float, z: float) -> bool:
 	return mesa_mask[fz * (N + 1) + fx] > 0.6
 
 
+## Steepest rise over a 50 m step, as rise/run.
+func slope_at(x: float, z: float) -> float:
+	var hx := height_at(x + CELL * 0.5, z) - height_at(x - CELL * 0.5, z)
+	var hz := height_at(x, z + CELL * 0.5) - height_at(x, z - CELL * 0.5)
+	return Vector2(hx, hz).length() / CELL
+
+
+## Firm, level enough for a hauler to drive up a ramp onto a moving landship.
+func good_ground(x: float, z: float) -> bool:
+	return slope_at(x, z) < 0.09 or is_hard_ground(x, z)
+
+
+## Height of a point above the average ground in a ring around it (for relays and scanners).
+func relief_at(p: Vector2, r := 700.0) -> float:
+	var sum := 0.0
+	for i in 8:
+		var a := TAU * i / 8.0
+		var q := p + Vector2(cos(a), sin(a)) * r
+		sum += height_at(q.x, q.y)
+	return height_at(p.x, p.y) - sum / 8.0
+
+
 func in_bounds(p: Vector2, margin := 200.0) -> bool:
 	return absf(p.x) < HALF - margin and absf(p.y) < HALF - margin
 

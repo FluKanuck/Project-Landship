@@ -100,10 +100,13 @@ SEATED
   move mouse        look around (the display stays where it is)
   hold ALT / TAB    cursor: use the display and the chair buttons
   1 2 3 4           chair buttons: COMBAT / RECON / TRANSIT layouts, ACTION STATIONS
+  5 6               LOGISTICS / FITTING layouts
   drag a header     swap two display sections
   E                 stand up
 ORDERS (tactical map or holo table)
   F1 F2 F3          select SWIFT-1 / SWIFT-2 / LANDSHIP
+  F4                cycle haulers and lifters (DEPLOY, standing routes)
+  LANDSHIP          CRANE PLANT: set a kit down beside the hull at crawl
   left click        add waypoint (uses the ACT and ROE you last picked)
   right click       remove last waypoint
   LAUNCH / RTB      on the tactical toolbar

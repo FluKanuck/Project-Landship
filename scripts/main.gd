@@ -90,6 +90,7 @@ func _inputs() -> void:
 		"escape": [KEY_ESCAPE], "time_up": [KEY_PERIOD, KEY_EQUAL], "time_down": [KEY_COMMA, KEY_MINUS],
 		"preset_1": [KEY_1], "preset_2": [KEY_2], "preset_3": [KEY_3], "preset_4": [KEY_4],
 		"select_1": [KEY_F1], "select_2": [KEY_F2], "select_3": [KEY_F3], "help": [KEY_H],
+		"select_vehicle": [KEY_F4], "preset_5": [KEY_5], "preset_6": [KEY_6],
 	}
 	for a in keys:
 		if not InputMap.has_action(a):

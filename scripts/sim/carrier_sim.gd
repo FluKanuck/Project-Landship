@@ -1,14 +1,15 @@
 class_name CarrierSim
 extends RefCounted
 ## The landship. Plotted course, four throttle settings, fuel, and the restart cost that
-## grows while it sits on the sand.
+## grows while it sits on the sand. Fuel lives in the stores (Stores.fuel); `fuel` here is
+## the tank as a fraction, for the helm display.
 
 const SPEEDS := [0.0, 2.5, 6.0, 10.0] # m/s: stop, crawl, cruise, flank
 const BURN := [0.0, 0.0000045, 0.000009, 0.000022] # fuel fraction per second
 const SIGNATURE := [0.25, 0.45, 0.7, 1.0]
 const THROTTLE_NAMES := ["ALL STOP", "SILENT CRAWL", "CRUISE", "FLANK"]
 const TURN_RATE := deg_to_rad(0.9) # rad/s
-const SENSOR_RANGE := 2600.0
+const SENSOR_RANGE := 2600.0 # with the tier I sensor suite; see Fitting / SimCore.carrier_sensor()
 
 # Local sockets (Godot coords, metres) from hum_carrier.glb
 const LAUNCH_LOCAL := Vector3(8.0, 52.5, -120.0)
@@ -20,7 +21,10 @@ var pos := Vector3.ZERO
 var heading := 0.0 # radians, 0 = north (-Z), clockwise
 var speed := 0.0
 var throttle := 1
-var fuel := 0.86
+var stores: Stores
+var fuel: float:
+	get:
+		return stores.frac(Logi.Res.FUEL) if stores else 0.0
 var course: Array[Vector2] = []
 var parked_time := 0.0
 var pitch := 0.0
@@ -66,18 +70,18 @@ func set_throttle(t: int) -> bool:
 	if t == throttle:
 		return false
 	if throttle == 0 and t > 0:
-		fuel = maxf(0.0, fuel - restart_cost())
+		stores.take(Logi.Res.FUEL, restart_cost() * Logi.TANK_BASE)
 		parked_time = 0.0
 	throttle = t
 	return true
 
 
 func step(dt: float, sim: SimCore) -> void:
-	if fuel <= 0.0:
+	if stores.fuel <= 0.0:
 		throttle = 0
 	var target := float(SPEEDS[throttle])
 	speed = move_toward(speed, target, dt * 0.08)
-	fuel = maxf(0.0, fuel - BURN[throttle] * dt)
+	stores.take(Logi.Res.FUEL, BURN[throttle] * Logi.TANK_BASE * dt)
 	if throttle == 0 and speed < 0.05:
 		parked_time += dt
 	# steer along the plotted course

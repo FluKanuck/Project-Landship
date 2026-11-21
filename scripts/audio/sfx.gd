@@ -137,8 +137,15 @@ func _process(delta: float) -> void:
 	_gap = maxf(0.0, _gap - delta)
 	if not _voice.playing and _gap <= 0.0 and not _queue.is_empty():
 		var q: Dictionary = _queue.pop_front()
-		var s := load("res://assets/audio/vo_%s.ogg" % q.key)
-		if s:
+		var path := "res://assets/audio/vo_%s.ogg" % q.key
+		var s: AudioStream = load(path) if ResourceLoader.exists(path) else null
+		if s == null:
+			# no recorded line for this one: a squelch so the ear still catches it
+			if ResourceLoader.exists("res://assets/audio/ui_beep.ogg"):
+				_voice.stream = load("res://assets/audio/ui_beep.ogg")
+				_voice.play()
+			_gap = 0.4
+		else:
 			_voice.stream = s
 			_voice.play()
 			_gap = 0.25
@@ -176,7 +183,144 @@ func _cs(data: Dictionary) -> String:
 	return d.callsign if d else "SWIFT"
 
 
+func _v(data: Dictionary) -> String:
+	var v: VehicleSim = data.get("veh")
+	return v.callsign if v else "Crane"
+
+
+func _site(data: Dictionary) -> String:
+	var s = data.get("site")
+	return s.name.capitalize() if s is SiteSim else "the site"
+
+
+func _logistics(kind: String, data: Dictionary) -> bool:
+	match kind:
+		"site_found":
+			var s: SiteSim = data.site
+			say("site_found", "%sResource site %s, %s%s, bearing %03d." % ["Data burst: " if data.get("burst") else "", s.name.capitalize(),
+				Logi.SITE_KIND_NAMES[s.kind].to_lower(), " (enemy held)" if s.owner == Logi.Owner.ALIEN else "", int(data.bearing)], 5, "sensors")
+		"planted":
+			var k: String = Logi.KIND_NAMES[data.kind].to_lower()
+			if data.get("veh") == null:
+				say("crane_planted", "Crane has the %s down%s." % [k, " at " + _site(data) if data.get("site") else ""], 4, "helm")
+			else:
+				say("planted", "%s: %s planted%s." % [_v(data), k, " at " + _site(data) if data.get("site") else ""], 4, "comms")
+		"plant_failed":
+			say("plant_failed", "Can't plant the %s: %s." % [Logi.KIND_NAMES[data.kind].to_lower(), data.why], 5, "helm")
+			ui("err")
+		"structure_online":
+			var s: StructureSim = data.s
+			match s.kind:
+				Logi.Kind.RELAY: say("relay_online", "Relay online. Network extended%s." % (" (high ground)" if s.range_mult > 1.05 else ""), 5, "comms")
+				Logi.Kind.SCANNER: say("scanner_online", "Scanner post online.", 5, "sensors")
+				Logi.Kind.EXTRACTOR: say("extractor_online", "Extractor running at %s." % _site(data), 5, "comms")
+				Logi.Kind.TURRET: say("turret_online", "Turret armed at %s." % _site(data), 4, "comms")
+				Logi.Kind.PAD: say("pad_online", "Loading pad ready at %s." % _site(data), 4, "comms")
+		"structure_attacked":
+			var s: StructureSim = data.s
+			say("hub_attack", "%s under attack!" % (_site(data) if data.get("site") else "Relay"), 8, "comms")
+			sfx("sfx_burst", -10.0)
+		"structure_lost":
+			var s: StructureSim = data.s
+			if s.kind == Logi.Kind.RELAY:
+				say("relay_lost", "Relay lost. The network's cut.", 8, "comms")
+			else:
+				say("hub_part_lost", "We've lost the %s at %s." % [Logi.KIND_NAMES[s.kind].to_lower(), _site(data)], 8, "comms")
+		"hub_dark":
+			say("hub_dark", "%s has gone dark." % _site(data), 6, "comms")
+		"hub_linked":
+			say("hub_linked", "%s back on the net." % _site(data), 5, "comms")
+		"hub_full":
+			say("hub_full", "%s stockpile is full. Extraction stopped." % _site(data), 4, "comms")
+		"hub_looted":
+			if data.site.linked:
+				say("hub_looted", "They're looting %s!" % _site(data), 8, "comms")
+		"alien_settling":
+			if data.get("seen", false):
+				say("alien_settling", "Aliens are building at %s." % _site(data), 7, "sensors")
+		"alien_outpost":
+			if data.get("seen", false):
+				say("alien_outpost", "Alien outpost established at %s." % _site(data), 7, "sensors")
+		"site_cleared":
+			say("site_cleared", "%s is clear. The site is ours to take." % _site(data), 7, "xo")
+		"site_lootable":
+			say("site_lootable", "Alien facility down at %s. Salvage on the ground." % _site(data), 6, "xo")
+		"alien_structure_destroyed":
+			var s: StructureSim = data.s
+			if s.kind == Logi.Kind.ALIEN_NODE:
+				say("node_destroyed", "The recharge node is down!", 9, "xo")
+			else:
+				say("outpost_destroyed", "Alien outpost destroyed.", 7, "xo")
+		"raider_killed":
+			if data.get("seen", false):
+				say("raider_down", "Raider down.", 6, "sensors")
+		"veh_deploy":
+			say("veh_deploy", "%s deploying." % _v(data), 3, "flight")
+		"veh_home":
+			match data.get("why", ""):
+				"bingo": say("veh_bingo", "%s, bingo fuel. Coming home." % _v(data), 5, "flight")
+				"fuel": say("veh_dry", "%s is dry. Limping home on the reserve." % _v(data), 6, "flight")
+				"evade": say("veh_home", "%s broke contact, coming home." % _v(data), 4, "flight")
+		"veh_aboard":
+			var txt := "%s aboard." % _v(data)
+			if data.fuel + data.mat > 0.5:
+				txt = "%s aboard, unloading %d fuel, %d materials." % [_v(data), int(data.fuel), int(data.mat)]
+			say("veh_aboard", txt, 4, "helm")
+		"veh_loaded":
+			say("veh_loaded", "%s loaded at %s%s." % [_v(data), _site(data), " (part load)" if data.get("part") else ""], 3, "comms")
+		"veh_looted":
+			say("veh_looted", "%s has the salvage from %s." % [_v(data), _site(data)], 4, "comms")
+		"veh_cannot":
+			say("veh_cannot", "%s can't %s: %s." % [_v(data), data.what, data.why], 5, "comms")
+		"veh_cannot_deploy":
+			say("veh_cannot", "%s can't deploy: %s." % [_v(data), str(data.why).to_lower()], 5, "helm")
+			ui("err")
+		"veh_fire":
+			say("veh_fire", "%s taking fire!" % _v(data), 8, "comms")
+			sfx("sfx_burst", -10.0)
+		"veh_breaking":
+			say("veh_breaking", "%s under fire, breaking off." % _v(data), 8, "comms")
+		"veh_damage":
+			say("veh_damage", "%s hit." % _v(data), 7, "comms")
+		"veh_lost":
+			say("veh_lost", "%s lost%s." % [_v(data), " (out of fuel)" if data.get("why") == "fuel" else ""], 9, "comms")
+		"veh_link_lost":
+			say("veh_link_lost", "Lost the link to %s. Running last orders." % _v(data), 6, "comms")
+		"veh_link_restored":
+			say("veh_link_back", "%s back on the net." % _v(data), 5, "comms")
+		"route_broken":
+			say("route_broken", "%s: route broken, coming home." % _v(data), 6, "comms")
+		"route_set":
+			if data.on:
+				say("route_set", "%s on a standing route." % _v(data), 3, "flight")
+		"veh_refit":
+			say("veh_refit", "%s refit: %s." % [_v(data), data.veh.fit_text().to_lower()], 3, "helm")
+		"fab_done":
+			say("fab_done", "Fabrication: %s complete." % str(data.name).to_lower(), 4, "xo")
+		"fab_waiting":
+			say("fab_waiting", "Fabricator waiting on materials. The %s needs %d." % [str(data.name).to_lower(), int(data.cost)], 6, "xo")
+		"fab_refused":
+			say("fab_refused", "Can't build the %s: %s." % [str(data.name).to_lower(), data.why], 5, "xo")
+			ui("err")
+		"refit_start":
+			say("refit_start", "Refitting slot %d." % (int(data.slot) + 1), 4, "helm")
+		"refit_done":
+			if data.module != "":
+				say("refit_done", "%s online." % Logi.MODULES[data.module].name.capitalize(), 5, "helm")
+		"module_upgraded":
+			say("module_upgraded", "%s fitted." % str(data.name).capitalize(), 5, "helm")
+		"scanner_burst":
+			say("burst", "Scanner data burst: %d contact report%s." % [data.burst, "" if data.burst == 1 else "s"], 6, "sensors")
+		"objective":
+			say("objective", "New objective: %s." % str(data.text).capitalize(), 6, "xo")
+		_:
+			return false
+	return true
+
+
 func _on_event(kind: String, data: Dictionary) -> void:
+	if _logistics(kind, data):
+		return
 	var n := _n(data)
 	match kind:
 		"boot":
@@ -241,15 +385,14 @@ func _on_event(kind: String, data: Dictionary) -> void:
 		"drone_lost":
 			say("lost_%d" % n, "%s lost%s." % [_cs(data), " (fuel exhausted)" if data.get("why") == "fuel" else ""], 9)
 		"rebuild_start":
-			say("rebuild", "Fabrication started a replacement for %s (20 min)." % _cs(data), 4)
+			say("rebuild", "Fabrication queued a replacement for %s (%d materials)." % [_cs(data), int(data.get("cost", 40))], 4)
 		"drone_rebuilt":
 			say("rebuilt", "Replacement %s on deck." % _cs(data), 5)
 		"node_found":
 			say("node_found", "Alien recharge node sighted, bearing %03d." % int(data.bearing), 9)
-			say("xo_objective_done", "", 7)
 			sfx("sfx_contact", -4.0)
 		"orders_locked":
-			say("locked", "No link with %s. Orders locked." % _cs(data), 6)
+			say("locked", "No link with %s. Orders locked." % (_v(data) if data.has("veh") else _cs(data)), 6)
 			ui("err")
 		"cannot_launch":
 			say("cannot_launch", "%s is not ready to launch." % _cs(data), 4)

@@ -160,6 +160,25 @@ func _marker(key: String, shape: String, col: Color) -> Dictionary:
 			c.height = 0.07
 			c.radial_segments = 3
 			m = c
+		"site":
+			var c := CylinderMesh.new()
+			c.top_radius = 0.035
+			c.bottom_radius = 0.035
+			c.height = 0.006
+			c.radial_segments = 6
+			c.rings = 1
+			m = c
+		"mast":
+			var c := CylinderMesh.new()
+			c.top_radius = 0.002
+			c.bottom_radius = 0.008
+			c.height = 0.08
+			c.radial_segments = 4
+			m = c
+		"box":
+			var b := BoxMesh.new()
+			b.size = Vector3(0.022, 0.014, 0.034)
+			m = b
 		_:
 			var s := SphereMesh.new()
 			s.radius = 0.016
@@ -238,6 +257,38 @@ func _update_markers() -> void:
 			(markers[key].node as Node3D).visible = false
 	if Sim.node_found:
 		_place(_marker("node", "node", Pal.UI_ENEMY), Terrain.CAMP, 0.04, "RECHARGE NODE")
+	# the supply war: sites, relays and scanners, haulers and lifters
+	for s in Sim.sites:
+		var key := "site%d" % s.id
+		if not s.discovered:
+			continue
+		var owner := s.owner if s.owner != Logi.Owner.PLAYER or s.linked else s.known_owner
+		var col := Pal.UI_TEXT
+		if owner == Logi.Owner.PLAYER:
+			col = Pal.UI_FRIEND
+		elif owner == Logi.Owner.ALIEN:
+			col = Pal.UI_ENEMY
+		var rec := _marker(key, "site", col)
+		rec.col = col
+		var txt := "%s %s" % [s.name, Logi.SITE_KIND_SHORT[s.kind]]
+		if owner == Logi.Owner.PLAYER:
+			txt += "  F%d M%d%s" % [int(s.known_stock[0]), int(s.known_stock[1]), "" if s.linked else " DARK"]
+		_place(rec, s.pos, 0.01, txt, 1.0 if s.linked or owner != Logi.Owner.PLAYER else 0.5)
+	for st in Sim.structures:
+		if st.is_alien() or not st.kind in [Logi.Kind.RELAY, Logi.Kind.SCANNER]:
+			continue
+		var rec := _marker("st%d" % st.id, "mast", Pal.UI_FRIEND)
+		if st.dead:
+			(rec.node as Node3D).visible = false
+			continue
+		_place(rec, st.pos, 0.04, "RELAY" if st.kind == Logi.Kind.RELAY else "SCANNER", 1.0 if st.linked else 0.4)
+	for v in Sim.vehicles:
+		var rec := _marker("veh%d" % v.id, "box" if v.is_hauler() else "drone", Pal.UI_FRIEND)
+		if not v.is_out():
+			(rec.node as Node3D).visible = false
+			continue
+		var lost := v.link == DroneSim.Link.LOST
+		_place(rec, v.last_known if lost else v.pos2(), 0.02 if v.is_hauler() else 0.1, v.callsign + (" ?" if lost else ""), 0.5 if lost else 1.0, v.heading)
 
 
 # ------------------------------------------------------------------ lines: coverage, plans, stalks
@@ -248,8 +299,8 @@ func _draw_lines() -> void:
 		return
 	lines_mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 	var c := Sim.carrier
-	_ring(c.pos2(), CarrierSim.SENSOR_RANGE, Color(Pal.UI_TEXT, 0.35))
-	_ring(c.pos2(), Sim.LINK_MAX, Color(Pal.UI_FRIEND, 0.18), true)
+	_ring(c.pos2(), Sim.carrier_sensor(), Color(Pal.UI_TEXT, 0.35))
+	_ring(c.pos2(), Sim.link_range(), Color(Pal.UI_FRIEND, 0.18), true)
 	var prev := c.pos2()
 	for p in c.course:
 		_seg(prev, p, Color(Pal.UI_TEXT, 0.7), 0.03)
@@ -273,6 +324,19 @@ func _draw_lines() -> void:
 	for ct in Sim.contacts.values():
 		var a := 0.7 if ct.live else 0.25
 		_stalk(Vector2(ct.pos.x, ct.pos.z), 0.05, Color(Pal.UI_ENEMY, a))
+	for e in Sim.net.edges:
+		_seg(e[0], e[1], Color(Pal.UI_FRIEND, 0.5), 0.04)
+	for n in Sim.net.nodes:
+		if n.src != null:
+			_ring(n.pos, n.range, Color(Pal.UI_FRIEND, 0.12), true)
+	for v in Sim.vehicles:
+		if v.is_out() and v.link != DroneSim.Link.LOST:
+			var from := v.pos2()
+			for i in range(v.wp, v.plan.size()):
+				var w: Dictionary = v.plan[i]
+				var to: Vector2 = c.pos2() if w.act == VehicleSim.Act.HOME else w.pos
+				_seg(from, to, Color(Pal.UI_FRIEND, 0.4), 0.03)
+				from = to
 	lines_mesh.surface_end()
 
 
