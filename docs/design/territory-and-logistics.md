@@ -105,19 +105,65 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - Landship fuel must drop so that resupply matters.
 - Raiders gain targets: hubs, haulers in the open and relays (to blind and cut off).
 
-## Open questions (next round)
-1. **How is a structure placed?** Built in the landship's fabricator and delivered by lifter or
-   hauler (a construction run is itself a logistics run), or by a dedicated engineer vehicle?
-2. **Resource kinds:** two (FUEL + MATERIALS, where materials fabricate drones, munitions and
-   structures) or more?
-3. **Rendezvous:** must the landship stop to take a hauler, or can it load on the move at crawl?
-4. **Enemy:** do raiders only destroy hubs, or can they take them over and use them?
-5. **Hub defence:** automatic only, or can the player set its ROE (fire / hold / dark)?
+## Round 2 detail (21 Nov)
+
+### Construction: built aboard, planted in the field
+- The landship's fabricator builds structures. Small ones (relay, scanner) come out whole.
+  A hub comes out as **kits**: extractor, turret, loading pad.
+- **Planting:**
+  - *Crane rig:* the landship sets a kit down alongside. Fast, but only next to the hull,
+    so the landship has to drive to the site.
+  - *Engineering vehicle:* carries kits out (one at a time, or with a hauler) and assembles
+    them on site. Assembly takes time and the vehicle is exposed while it works.
+- A hub goes live in stages: the extractor runs as soon as it's assembled, the turret
+  covers it once its kit arrives, and the pad enables dispatch. An undefended hub is a
+  deliberate gamble.
+
+### Resources: FUEL and MATERIALS
+- **FUEL:** the landship's tank, drone sorties, and vehicle runs. Landship endurance gets
+  cut so that resupply matters (target TBD).
+- **MATERIALS:** fabrication of drones, vehicles, structure kits, repairs (and munitions later).
+
+### Loading at the landship (no stop needed)
+- **Ramp / lowered elevator:** a hauler matches speed and drives aboard. Needs the
+  landship at crawl and good ground.
+- **Crane grab:** the crane lifts a hauler or its pod off the sand alongside. Works on rough
+  ground but is slower per load, and the crane is busy.
+- Either way, the hauler unloads into the landship's stores and goes back out on its standing route.
+
+### Raiders vs hubs: destroy, loot, inhabit
+1. **Attack:** they hit the turret, then the pad.
+2. **Loot:** they take the stockpiled fuel and materials home. The stockpile cap now cuts
+   both ways: a full hub is a prize.
+3. **Inhabit:** they plant their own facility on the site (a recharge node, or an alien
+   extractor). The site turns hostile and has to be cleared and retaken. Their territory
+   grows on the same sites ours does.
+- **Mirror:** an alien node on a site is something we can strike, loot (?) and reclaim.
+
+### Hub defence
+- Basic turrets. They fire at any enemy in range, with no player ROE. Visible to enemy scouting.
+
+## Open questions (round 3)
+1. **Engineering vehicle:** a new unit type (ground, armoured, slow) or a role for the hauler
+   with an assembly kit?
+2. **Can we loot alien sites?** Do we get fuel and materials back from a cleared alien
+   facility, or just the site?
+3. **Site density and size:** how many resource sites in the ~10 km area, and do kinds
+   differ (fuel site vs materials site), or does each site yield both?
+4. **Lifters:** with the ramp and crane, do we still want air lifters for small, urgent
+   loads, or is ground hauling the whole game?
+5. **Landship fuel target:** how long should a full tank last at cruise? (Proposal: 4–6 h
+   game time, i.e. 15–25 min at x16.)
 
 ## Decisions
 
 - Territory = resource hubs; output moves by air or land to the landship, which is the single depot and factory.
 - Player-built structures: light extraction hub (basic defence + loading facilities), data link relay, scanner post.
+- Structures are fabricated aboard the landship (hubs as kits) and planted by crane rig or an engineering vehicle that assembles them on site.
+- Two resources: FUEL and MATERIALS.
+- Haulers load without the landship stopping: by ramp/lowered elevator or crane grab.
+- Raiders destroy, loot and then inhabit hub sites with their own facilities.
+- Hub turrets fire automatically at any enemy in range; no player ROE.
 
 ## Parked
 
