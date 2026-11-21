@@ -46,9 +46,78 @@ That asymmetry is the seed: the raiders' node is a supply point the player can f
 - **Enemy mirror.** Raider recharge nodes are their territory. Denying a node strands raiders
   (they already go home when low) — logistics warfare on both sides.
 
+## Research pass (Nov 2026)
+
+| Game | How territory works | How supply reaches the mobile base | Take for Landship |
+| --- | --- | --- | --- |
+| **Carrier Command 2** | Islands with a command centre; captured by landing virus bots once no enemy is within ~1.5 km. Each island has its own defences and output. | Barges carry stock Island → Warehouse → Carrier. Warehouses shorten delivery and can't be restocked. More barges come from capturing barge-factory islands. | The physical barge is good. The routing rules confuse players: forum threads ask whether island → carrier works without a warehouse. **Keep it to one readable hop: hub → landship.** |
+| **Carrier Command: Gaea Mission** | Each captured island is set to *defence*, *resource* or *production*. | Islands only contribute when linked to the stockpile island. Supply subs run the network and a barque brings stock to the carrier. | Giving each site one role is clean. A site must be *connected* to count. |
+| **Deserts of Kharak** | Resource fields and wrecks, no ownership. | Salvagers carry resources back to the carrier or a support cruiser. The carrier is the mobile base and builds everything. | Closest to our model: **the landship is the depot and the factory**, and haulers come to it. |
+| **Company of Heroes** | Sectors captured at points. | A point only pays out while it is connected to the HQ through owned sectors. Cut-off points stay yours but produce nothing. The "cutoff move" is a core tactic. | Our relay network plays this role: a hub cut off from the link can't be seen, ordered or dispatched. |
+| **Foxhole** | Player-built bases. | Players gather, craft and truck everything, later by rail too. The manual hauling burned players out, and a logistics strike pushed the devs to rework it. | **Hauling must not be a chore.** The player sets policy (standing routes, priorities). The drama is interception, not clicking every trip. |
+| **HighFleet** | Cities and depots on a strategic map. | Fuel and cash keep the fleet moving. Fuel depots are cheap and intel outposts are separate sites. | Fuel as the strategic leash on the whole fleet. Today's landship tank (~26 h at cruise) is too generous for that. |
+
+Sources: [CC2 Steam discussion (logistics routing)](https://steamcommunity.com/app/1489630/discussions/0/5503948370860958792),
+[CC2 basic guide](https://gamepretty.com/carrier-command-2-basic-guide-equipment-layered-attack-method-common-issues-and-blueprints-further-goals/),
+[CC2 PvP strategies (capture)](https://www.gamenguides.com/carrier-command-2-pvp-tournament-strategies),
+[CC2 store page](https://www.xbox.com/games/store/carrier-command-2/9mvtc1f5f68s),
+[Gaea Mission (Wikipedia)](https://en.wikipedia.org/wiki/Carrier_Command:_Gaea_Mission),
+[DoK unit list](https://www.gamepressure.com/homeworlddesertsofkharak/list-of-units/z48f42),
+[DoK carrier](https://www.gamepressure.com/homeworlddesertsofkharak/carrier/z58f43),
+[CoH2 territory](https://www.gamepressure.com/companyofheroes2/territory/ze516b),
+[CoH resources](https://companyofheroes.fandom.com/wiki/Resources),
+[Foxhole (Wikipedia)](https://en.wikipedia.org/wiki/Foxhole_(video_game)),
+[Foxhole logistics strike (PC Gamer)](https://pcgamer.com/logistics-players-in-mmo-wargame-foxhole-go-on-strike),
+[HighFleet tips](https://culturedvultures.com/?p=161089).
+Mostly community guides; CC2 details may predate later patches.
+
+## Working model (from the 21 Nov discussion)
+
+Territory = **resource hubs**. Their output travels **by air or land to the landship**,
+which is the only depot and the only factory.
+
+### Sites (fixed on the map, found by scouting)
+- **Resource sites**: where a hub can be built. Kinds TBD (see questions).
+- **Any open ground**: relays and scanners can go almost anywhere, with better range on high ground.
+
+### Structures the player can build
+| Structure | Does | Notes |
+| --- | --- | --- |
+| **Light extraction hub** | Extracts into a local stockpile (capped). Basic point defence. Loading pad for lifters and a ramp for haulers. | A full stockpile stops extracting. A hub is a target. |
+| **Data link relay** | Extends the C4I bubble (today 5 km around the landship). Relays chain. | Loses link if destroyed, and cuts off everything downstream (the CoH "cutoff"). |
+| **Scanner post** | Fixed sensor: live enemy positions under its footprint, and keeps terrain knowledge fresh. | Only reports while linked. Unlinked scanners buffer and burst, like drones today. |
+
+### Transport
+| | **Air lifter** | **Land hauler** |
+| --- | --- | --- |
+| Speed | Fast | Slow, follows the terrain |
+| Load | Small | Large |
+| Meets the landship | Lands on deck anywhere in range | Needs a rendezvous: the landship stops, or both plot to a meeting point |
+| Risk | Raider fire, needs a link | Ambush on the route, can be shadowed back to the landship |
+| Orders | Standing route + priority, like a drone waypoint chain | Same |
+
+Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracting but sits idle and dark.
+
+### Fit with the wedge
+- Relays and scanners reuse the existing link, knowledge and ghost-marker code.
+- Lifters and haulers reuse the waypoint and ROE orders.
+- Fabrication stops being free, so a Swift costs materials.
+- Landship fuel must drop so that resupply matters.
+- Raiders gain targets: hubs, haulers in the open and relays (to blind and cut off).
+
+## Open questions (next round)
+1. **How is a structure placed?** Built in the landship's fabricator and delivered by lifter or
+   hauler (a construction run is itself a logistics run), or by a dedicated engineer vehicle?
+2. **Resource kinds:** two (FUEL + MATERIALS, where materials fabricate drones, munitions and
+   structures) or more?
+3. **Rendezvous:** must the landship stop to take a hauler, or can it load on the move at crawl?
+4. **Enemy:** do raiders only destroy hubs, or can they take them over and use them?
+5. **Hub defence:** automatic only, or can the player set its ROE (fire / hold / dark)?
+
 ## Decisions
 
-_(none yet)_
+- Territory = resource hubs; output moves by air or land to the landship, which is the single depot and factory.
+- Player-built structures: light extraction hub (basic defence + loading facilities), data link relay, scanner post.
 
 ## Parked
 
