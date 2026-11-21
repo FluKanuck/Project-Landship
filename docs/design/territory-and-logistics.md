@@ -143,17 +143,38 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 ### Hub defence
 - Basic turrets. They fire at any enemy in range, with no player ROE. Visible to enemy scouting.
 
-## Open questions (round 3)
-1. **Engineering vehicle:** a new unit type (ground, armoured, slow) or a role for the hauler
-   with an assembly kit?
-2. **Can we loot alien sites?** Do we get fuel and materials back from a cleared alien
-   facility, or just the site?
-3. **Site density and size:** how many resource sites in the ~10 km area, and do kinds
-   differ (fuel site vs materials site), or does each site yield both?
-4. **Lifters:** with the ramp and crane, do we still want air lifters for small, urgent
-   loads, or is ground hauling the whole game?
-5. **Landship fuel target:** how long should a full tank last at cruise? (Proposal: 4–6 h
-   game time, i.e. 15–25 min at x16.)
+## Round 3 detail (21 Nov)
+
+### Engineering = hauler + engineer kit
+- One ground chassis. Fitted with a cargo pod it hauls; fitted with an engineer kit it
+  carries structure kits and assembles them on site. Refits happen aboard the landship.
+- Fewer unit types, and a real trade: a hauler that is building isn't hauling.
+
+### Clearing an alien site
+- We take **whatever is lootable** (their stockpile, salvageable materials from the wreck
+  of their facility) **and the site itself**, which is then free to build our own hub on.
+- Looting is a hauler job: it has to drive in, load and get back to the landship.
+
+### Site placement: think in density, not counts
+- The 10 km area is a test box; the final map is much larger. So sites are specified as a
+  **density and a spacing rule**, not a fixed number, so the same rules scale.
+- Starting proposal to tune in play:
+  - Roughly **1 resource site per 8–12 km²**, with a **minimum spacing of 1.5–2 km**
+    (enough that a single turret never covers two sites).
+  - Site kinds differ (**fuel-rich** vs **materials-rich**, some mixed), so the network
+    you build is a choice rather than "take everything near you".
+  - Richer sites sit further from the start and nearer alien ground, and are more often
+    already inhabited.
+  - Relay and scanner value comes from **high ground**, which the terrain generator
+    already produces (mesas).
+- Balance levers: yield rate, stockpile cap, distance to the landship's likely track, and
+  exposure (open flats vs broken ground for haulers).
+
+## Open questions (round 4)
+1. **Air lifters:** do we still want them for small, urgent loads, or is it all ground hauling?
+2. **Landship fuel:** how long should a full tank last at cruise? (Proposal: 4–6 h game time.)
+3. **Theatre scale:** for the final map, should the landship's data link bubble and drone
+   ranges grow too, or do relays carry the whole job of covering a big map?
 
 ## Decisions
 
@@ -164,6 +185,9 @@ Rule: **a hub only dispatches while it is linked.** A cut-off hub keeps extracti
 - Haulers load without the landship stopping: by ramp/lowered elevator or crane grab.
 - Raiders destroy, loot and then inhabit hub sites with their own facilities.
 - Hub turrets fire automatically at any enemy in range; no player ROE.
+- The engineering vehicle is a hauler fitted with an engineer kit.
+- Clearing an alien site yields whatever is lootable there, plus the site itself.
+- Resource sites are specified by density and spacing (not a fixed count) so the rules scale to the much larger final map; exact numbers come from balancing.
 
 ## Parked
 
